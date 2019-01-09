@@ -17,8 +17,8 @@ const INITIAL_VIEW_STATE = {
   rotationOrbit: 30,
   orbitAxis: 'Y',
   fov: 50,
-  minDistance: 1,
-  maxDistance: 20
+  minDistance: 0,
+  maxDistance: 1000
 };
 
 class Root extends Component {
@@ -40,7 +40,14 @@ class Root extends Component {
             extruded: true,
             getLineColor: () => [255, 255, 255],
             getFillColor: f => f.color,
-            getElevation: f => f.elevation
+            getElevation: f => f.elevation,
+            lightSettings: {
+              coordinateSystem: COORDINATE_SYSTEM.IDENTITY,
+              lightsPosition: [20, 100, 100, 50, 0, 0],
+              lightsStrength: [1, 0, 2, 0],
+              numberOfLights: 2,
+              ambientRatio: 0.1
+            }
           })
         ]}
       />
