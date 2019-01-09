@@ -76,10 +76,10 @@
     "tap-browser-color": "^0.1.2",
     "tape": "^4.9",
     "tape-catch": "^1.0.4",
-    "webpack": "^4.3.0",
+    "webpack": "^4.28.1",
     "webpack-bundle-analyzer": "^2.11.1",
     "webpack-cli": "^2.0.13",
-    "webpack-dev-server": "^3.1.1"
+    "webpack-dev-server": "^3.1.14"
   },
   "nyc": {
     "sourceMap": false,
