@@ -33,6 +33,8 @@ class Root extends Component {
         layers={[
           new PolygonLayer({
             coordinateSystem: COORDINATE_SYSTEM.IDENTITY,
+            pickable: true,
+            autoHighlight: true,
             data: SAMPLE_TREEMAP,
             stroked: false,
             filled: true,
@@ -46,7 +48,7 @@ class Root extends Component {
               lightsPosition: [20, 100, 100, 50, 0, 0],
               lightsStrength: [1, 0, 2, 0],
               numberOfLights: 2,
-              ambientRatio: 0.1
+              ambientRatio: 0.2
             }
           })
         ]}
