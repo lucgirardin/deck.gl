@@ -1,7 +1,8 @@
 import React, {Component} from 'react';
 import {render} from 'react-dom';
 import {COORDINATE_SYSTEM} from 'deck.gl';
-import DeckGL, {PolygonLayer, OrbitView} from 'deck.gl';
+import DeckGL, {OrbitView} from 'deck.gl';
+import PolygonLayerWithFilter from './polygon-layer';
 
 import SAMPLE_TREEMAP from './sample-treemap.json';
 
@@ -31,7 +32,7 @@ class Root extends Component {
         views={[new OrbitView()]}
         initialViewState={INITIAL_VIEW_STATE}
         layers={[
-          new PolygonLayer({
+          new PolygonLayerWithFilter({
             coordinateSystem: COORDINATE_SYSTEM.IDENTITY,
             pickable: true,
             autoHighlight: true,
@@ -43,6 +44,8 @@ class Root extends Component {
             getLineColor: () => [255, 255, 255],
             getFillColor: f => f.color,
             getElevation: f => f.elevation,
+            getFilterValue: 1,
+            filterRange: [0, 0.5],
             lightSettings: {
               coordinateSystem: COORDINATE_SYSTEM.IDENTITY,
               lightsPosition: [20, 100, 100, 50, 0, 0],

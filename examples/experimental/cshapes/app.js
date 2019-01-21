@@ -1,6 +1,7 @@
 import React, {Component} from 'react';
 import {render} from 'react-dom';
-import DeckGL, {GeoJsonLayer} from 'deck.gl';
+import DeckGL from 'deck.gl';
+import GeoJsonLayerWithFilter from './geojson-layer';
 
 const SAMPLE_CSHAPES = 'CShapes-2018.geojson';
 
@@ -21,7 +22,7 @@ class Root extends Component {
         controller={true}
         initialViewState={INITIAL_VIEW_STATE}
         layers={[
-          new GeoJsonLayer({
+          new GeoJsonLayerWithFilter({
             pickable: true,
             autoHighlight: true,
             data: SAMPLE_CSHAPES,
@@ -31,7 +32,8 @@ class Root extends Component {
             extruded: false,
             getLineColor: () => [255, 255, 255],
             getFillColor: f => [127, 127, 127],
-            getElevation: f => f.elevation
+            getElevation: f => f.elevation,
+            getFilterValue: 0
           })
         ]}
       />
