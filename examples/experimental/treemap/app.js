@@ -45,7 +45,7 @@ class Root extends Component {
             getFillColor: f => f.color,
             getElevation: f => f.elevation,
             getFilterValue: 1,
-            filterRange: [0, 0.5],
+            filterRange: [0, 1],
             lightSettings: {
               coordinateSystem: COORDINATE_SYSTEM.IDENTITY,
               lightsPosition: [20, 100, 100, 50, 0, 0],
