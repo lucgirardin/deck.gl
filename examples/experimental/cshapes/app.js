@@ -18,21 +18,25 @@ export class App extends Component {
     super(props);
 
     this.state = {
-      hoveredObject: null
+      hoveredObject: null,
+      year: 2017
     };
     this._onHover = this._onHover.bind(this);
+    this._setTime = this._setTime.bind(this);
     this._renderTooltip = this._renderTooltip.bind(this);
+    this._renderOptions = this._renderOptions.bind(this);
   }
 
   _onHover({x, y, object}) {
     this.setState({x, y, hoveredObject: object});
   }
 
-  _setTime() {
-    const {time} = this.state;
+  _setTime(t) {
+    this.setState({year: t});
+    // const {time} = this.state;
     // t = date;
     // redraw();
-    console.log(time);
+    // console.log(time);
   }
 
   _renderTooltip() {
@@ -48,6 +52,18 @@ export class App extends Component {
           </div>
         </div>
       )
+    );
+  }
+
+  _renderOptions() {
+    const {year} = this.state;
+    return (
+        year && (
+            <div id="options">
+              <div>Year: {year}</div>
+              <input type="range" min="1886" max="2017" value={year} onChange={(e) => this._setTime(e.target.value)}/>
+            </div>
+        )
     );
   }
 
@@ -79,11 +95,12 @@ export class App extends Component {
         ]}
       >
         {this._renderTooltip}
+        {this._renderOptions}
       </DeckGL>
     );
   }
 }
-// render(<App />, document.body.appendChild(document.createElement('div')));
+
 export function renderToDOM(container) {
   render(<App />, container);
 }
