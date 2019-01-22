@@ -1,5 +1,4 @@
 import {GeoJsonLayer} from '@deck.gl/layers';
-import dataFilter from './data-filter';
 import {getGeojsonFeatures, separateGeojsonFeatures} from './geojson';
 
 // const defaultProps = {
@@ -8,33 +7,6 @@ import {getGeojsonFeatures, separateGeojsonFeatures} from './geojson';
 // };
 
 export default class GeoJsonLayerWithFilter extends GeoJsonLayer {
-  getShaders() {
-    const shaderSettings = super.getShaders();
-
-    shaderSettings.modules.push(dataFilter);
-
-    shaderSettings.inject = {
-      'vs:#decl': `
-attribute float instanceFilterValue;
-`,
-      'vs:#main-end': `
-filter_setValue(instanceFilterValue);
-`,
-      'fs:#main-end': `
-gl_FragColor = filter_filterColor(gl_FragColor);
-`
-    };
-    return shaderSettings;
-  }
-
-  initializeState() {
-    super.initializeState();
-
-    // this.getAttributeManager().addInstanced({
-    //   instanceFilterValue: {size: 1, accessor: 'getFilterValue'}
-    // });
-  }
-
   updateState({oldProps, props, changeFlags}) {
     if (changeFlags.dataChanged) {
       const data = props.data;
@@ -51,4 +23,4 @@ function filterByTime(item) {
   return true;
 }
 
-// GeoJsonLayerWithFilter.defaultProps = GeoJsonLayer.defaultProps;
+GeoJsonLayerWithFilter.defaultProps = GeoJsonLayer.defaultProps;
