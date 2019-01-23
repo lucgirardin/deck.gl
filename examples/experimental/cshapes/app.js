@@ -14,6 +14,18 @@ const INITIAL_VIEW_STATE = {
   pitch: 0
 };
 
+const animation = {
+  stop: false,
+  frameCount: 0,
+  // var $results = $("#results");
+  fps: null,
+  fpsInterval: null,
+  startTime: null,
+  now: null,
+  then: null,
+  elapsed: null
+}
+
 export class App extends Component {
   constructor(props) {
     super(props);
@@ -47,8 +59,37 @@ export class App extends Component {
     // console.log(time);
   }
 
+  startAnimating(fps) {
+    animation.fpsInterval = 1000 / fps;
+    animation.then = Date.now();
+    animation.startTime = animation.then;
+    this.animate();
+  }
+
+  animate() {
+
+    // request another frame
+
+    window.requestAnimationFrame(this.animate.bind(this));
+
+    // calc elapsed time since last loop
+
+    animation.now = Date.now();
+    animation.elapsed = animation.now - animation.then;
+
+    // if enough time has elapsed, draw the next frame
+
+    if (animation.elapsed > animation.fpsInterval) {
+
+      // Get ready for next frame by setting then=now, but also adjust for your
+      // specified fpsInterval not being a multiple of RAF's interval (16.7ms)
+      animation.then = animation.now - (animation.elapsed % animation.fpsInterval);
+
+      this._animate();
+    }
+  }
   _animate() {
-    this._animationFrame = window.requestAnimationFrame(this._animate.bind(this));
+    // this._animationFrame = window.requestAnimationFrame(this._animate.bind(this));
 
     var t = this.state.year + 1;
     if(t > 2017) {
@@ -88,7 +129,7 @@ export class App extends Component {
             class="timeslider"
             onChange={e => this._setTime(e.target.value)}
             />
-            <button type="button" onClick={e => this._animate()}>Animate</button>
+            <button type="button" onClick={e => this.startAnimating(1)}>Animate</button>
           </div>
         </div>
       )
@@ -139,18 +180,21 @@ export class App extends Component {
       dataChanged: true
     });
 
+    const trail = 5;
+
     function filterChanged(item, props) {
-      if (item.properties.from >= t && item.properties.from <=t) {
+      if (item.properties.from  <= t && item.properties.from >= t - trail) {
         return false;
       }
       return true;
     }
 
+
     const layer2 = new GeoJsonLayerWithFilter({
       id: 'changed',
       filter: filterChanged,
       data: SAMPLE_CSHAPES,
-      opacity: 0.5,
+      opacity: 1,
       stroked: true,
       filled: false,
       extruded: false,
@@ -163,7 +207,7 @@ export class App extends Component {
       // getFillColor: f=> colorScale(f.properties.growth),
       // getFillColor: f => [t / 10, t / 10, t / 10],
       getFillColor: f => [255, 0, 0],
-      getLineColor: f => [255, 0, 0],
+      getLineColor: f => [255, this.getColor(t, f, trail), this.getColor(t, f, trail), this.getAlpha(t, f, trail)],
       getFilterValue: f => f.props.to,
       updateTriggers: {
         getFillColor: t,
@@ -178,6 +222,22 @@ export class App extends Component {
     });
 
     return [layer, layer2];
+  }
+
+  getColor(t, f, trail) {
+    const elapsed = (t - f.properties.from);
+    const ratio = 1 - (elapsed / trail);
+    const number = 255 * (Math.pow(ratio, 3));
+    // console.log(t + ", " + f.properties.from + " -> " + elapsed + ", " + number);
+    return 255 - number;
+  }
+
+  getAlpha(t, f, trail) {
+    const elapsed = (t - f.properties.from);
+    const ratio = 1 - (elapsed / trail);
+    const number = 255 * (Math.pow(ratio, 3));
+    // console.log(t + ", " + f.properties.from + " -> " + elapsed + ", " + number);
+    return number;
   }
 
   redraw() {
