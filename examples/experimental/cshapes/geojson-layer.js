@@ -8,19 +8,12 @@ import {getGeojsonFeatures, separateGeojsonFeatures} from './geojson';
 
 export default class GeoJsonLayerWithFilter extends GeoJsonLayer {
   updateState({oldProps, props, changeFlags}) {
-    if (changeFlags.dataChanged) {
+    // if (changeFlags.dataChanged) {
       const data = props.data;
       const features = getGeojsonFeatures(data);
-      this.state.features = separateGeojsonFeatures(features, filterByTime);
-    }
+      this.state.features = separateGeojsonFeatures(features, props.filter);
+    // }
   }
-}
-
-function filterByTime(item) {
-  if (item.properties.from <= 2012 && item.properties.to >= 2012) {
-    return false;
-  }
-  return true;
 }
 
 GeoJsonLayerWithFilter.defaultProps = GeoJsonLayer.defaultProps;
