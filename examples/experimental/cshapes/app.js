@@ -129,7 +129,7 @@ export class App extends Component {
             class="timeslider"
             onChange={e => this._setTime(e.target.value)}
             />
-            <button type="button" onClick={e => this.startAnimating(1)}>Animate</button>
+            <button type="button" onClick={e => this.startAnimating(3)}>Animate</button>
           </div>
         </div>
       )
@@ -196,7 +196,7 @@ export class App extends Component {
       data: SAMPLE_CSHAPES,
       opacity: 1,
       stroked: true,
-      filled: false,
+      filled: true,
       extruded: false,
       wireframe: true,
       lineWidthScale: 20,
@@ -206,7 +206,7 @@ export class App extends Component {
       getElevation: f => (f.properties.from - 1886) * 3000,
       // getFillColor: f=> colorScale(f.properties.growth),
       // getFillColor: f => [t / 10, t / 10, t / 10],
-      getFillColor: f => [255, 0, 0],
+      getFillColor: f => [255, this.getColor(t, f, trail), this.getColor(t, f, trail), this.getAlpha(t, f, trail)],
       getLineColor: f => [255, this.getColor(t, f, trail), this.getColor(t, f, trail), this.getAlpha(t, f, trail)],
       getFilterValue: f => f.props.to,
       updateTriggers: {
