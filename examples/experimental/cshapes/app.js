@@ -1,6 +1,7 @@
 import React, {Component} from 'react';
 import {render} from 'react-dom';
 import DeckGL from 'deck.gl';
+import {StaticMap} from 'react-map-gl';
 import GeoJsonLayerWithFilter from './geojson-layer';
 
 const SAMPLE_CSHAPES = 'CShapes-2018.geojson';
@@ -44,6 +45,8 @@ export class App extends Component {
     this.redraw();
     // console.log(time);
   }
+
+
 
   _renderTooltip() {
     const {x, y, hoveredObject} = this.state;
@@ -183,6 +186,9 @@ export class App extends Component {
               initialViewState={INITIAL_VIEW_STATE}
               layers={layers}
           >
+            <StaticMap
+                mapStyle='mapbox://styles/mapbox/satellite-v9'
+            />
             {this._renderTooltip}
             {this._renderOptions}
           </DeckGL>
