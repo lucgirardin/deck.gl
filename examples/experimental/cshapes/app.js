@@ -20,7 +20,7 @@ export class App extends Component {
     this.state = {
       hoveredObject: null,
       year: 2017,
-      geojsonLayer: null
+      layers: []
     };
     this._onHover = this._onHover.bind(this);
     this._setTime = this._setTime.bind(this);
@@ -28,6 +28,17 @@ export class App extends Component {
     this._renderOptions = this._renderOptions.bind(this);
     this.redraw = this.redraw.bind(this);
     // this.render = this.render.bind(this);
+
+    const deckgl = new DeckGL.DeckGL({
+      container: 'map',
+      // mapboxApiAccessToken: '<your_token_here>',
+      // mapStyle: 'mapbox://styles/mapbox/light-v9',
+      latitude: 0,
+      longitude: 0,
+      zoom: 0,
+      maxZoom: 16,
+      pitch: 0,
+      layers: [] });
   }
 
   _onHover({x, y, object}) {
@@ -95,7 +106,7 @@ export class App extends Component {
       opacity: 1,
       stroked: true,
       filled: true,
-      extruded: true,
+      extruded: false,
       wireframe: true,
       lineWidthScale: 20,
       lineWidthMinPixels: 1,
@@ -117,24 +128,20 @@ export class App extends Component {
       onHover: this._onHover,
       dataChanged: true
     });
-    // layer.setState({year: t});
 
-    // const layers =  [geojsonLayer];
-
-    this.setState({geojsonLayer: layer});
-    // deckgl.setProps({layers})
+    this.setState({layers: [layer]});
   }
 
   render() {
-    const {geojsonLayer, year} = this.state;
-    console.log('Rendering at ' + year + ' for ' + geojsonLayer);
+    const {layers, year} = this.state;
+    console.log('Rendering at ' + year + ' for ' + layers);
     return (
       <DeckGL
         width="100%"
         height="100%"
         controller={true}
         initialViewState={INITIAL_VIEW_STATE}
-        layers={[geojsonLayer]}
+        layers={layers}
       >
         {this._renderTooltip}
         {this._renderOptions}
