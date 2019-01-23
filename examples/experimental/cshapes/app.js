@@ -25,6 +25,7 @@ export class App extends Component {
     this.state.layers = this.createLayers(2017);
     this._onHover = this._onHover.bind(this);
     this._setTime = this._setTime.bind(this);
+    this._animate = this._animate.bind(this);
     this._renderTooltip = this._renderTooltip.bind(this);
     this._renderOptions = this._renderOptions.bind(this);
     this.redraw = this.redraw.bind(this);
@@ -46,7 +47,15 @@ export class App extends Component {
     // console.log(time);
   }
 
+  _animate() {
+    this._animationFrame = window.requestAnimationFrame(this._animate.bind(this));
 
+    var t = this.state.year + 1;
+    if(t > 2017) {
+      t = 1886;
+    }
+    this._setTime(t);
+  }
 
   _renderTooltip() {
     const {x, y, hoveredObject} = this.state;
@@ -70,14 +79,17 @@ export class App extends Component {
       year && (
         <div id="options">
           <div>Year: {year}</div>
-          <input
+          <div>
+            <input
             type="range"
             min="1886"
             max="2017"
             value={year}
             class="timeslider"
             onChange={e => this._setTime(e.target.value)}
-          />
+            />
+            <button type="button" onClick={e => this._animate()}>Animate</button>
+          </div>
         </div>
       )
     );
@@ -186,9 +198,6 @@ export class App extends Component {
               initialViewState={INITIAL_VIEW_STATE}
               layers={layers}
           >
-            <StaticMap
-                mapStyle='mapbox://styles/mapbox/satellite-v9'
-            />
             {this._renderTooltip}
             {this._renderOptions}
           </DeckGL>
