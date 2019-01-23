@@ -35,7 +35,10 @@ export class App extends Component {
   }
 
   _setTime(t) {
-    this.setState({year: t});
+    this.setState({
+      year: t,
+      // layers: this.createLayers()
+    });
     // const {time} = this.state;
     // t = date;
     this.redraw();
@@ -81,7 +84,7 @@ export class App extends Component {
 
     const t = year;
 
-    function filterByTime(item, props) {
+    function filterActive(item, props) {
       if (item.properties.from <= year && item.properties.to >= year) {
         return false;
       }
@@ -90,9 +93,10 @@ export class App extends Component {
 
     console.log('Redrawing at ' + t);
     const layer = new GeoJsonLayerWithFilter({
-      filter: filterByTime,
+      id: 'active',
+      filter: filterActive,
       data: SAMPLE_CSHAPES,
-      opacity: 1,
+      opacity: 0.5,
       stroked: true,
       filled: true,
       extruded: false,
@@ -101,9 +105,10 @@ export class App extends Component {
       lineWidthMinPixels: 1,
       // fp64: true,
       // lightSettings: LIGHT_SETTINGS,
-      getElevation: f => (f.properties.from - 1886) * 10000,
+      getElevation: f => (f.properties.from - 1886) * 3000,
       // getFillColor: f=> colorScale(f.properties.growth),
-      getFillColor: f => [t / 10, t / 10, t / 10],
+      // getFillColor: f => [t / 10, t / 10, t / 10],
+      getFillColor: f => [100, 100, 100],
       getLineColor: f => [255, 255, 255],
       getFilterValue: f => f.props.to,
       updateTriggers: {
@@ -118,15 +123,54 @@ export class App extends Component {
       dataChanged: true
     });
 
-    return [layer];
+    function filterChanged(item, props) {
+      if (item.properties.from >= year && item.properties.from <=year) {
+        return false;
+      }
+      return true;
+    }
+
+    const layer2 = new GeoJsonLayerWithFilter({
+      id: 'changed',
+      filter: filterChanged,
+      data: SAMPLE_CSHAPES,
+      opacity: 0.5,
+      stroked: true,
+      filled: false,
+      extruded: false,
+      wireframe: true,
+      lineWidthScale: 20,
+      lineWidthMinPixels: 2,
+      // fp64: true,
+      // lightSettings: LIGHT_SETTINGS,
+      getElevation: f => (f.properties.from - 1886) * 3000,
+      // getFillColor: f=> colorScale(f.properties.growth),
+      // getFillColor: f => [t / 10, t / 10, t / 10],
+      getFillColor: f => [255, 0, 0],
+      getLineColor: f => [255, 0, 0],
+      getFilterValue: f => f.props.to,
+      updateTriggers: {
+        getFillColor: t,
+        getElevation: t,
+        data: t
+      },
+      getLineWidth: 10,
+      pickable: false,
+      autoHighlight: false,
+      // onHover: this._onHover,
+      // dataChanged: true
+    });
+
+    return [layer, layer2];
   }
 
   redraw() {
-    this.setState({layers: this.createLayers()});
+    // this.setState({layers: this.createLayers()});
   }
 
   render() {
-    const {layers, year} = this.state;
+    const {year} = this.state;
+    const layers = this.createLayers();
     console.log('Rendering at ' + year + ' for ' + layers);
 
     if(this.deckgl === undefined) {
