@@ -20,25 +20,14 @@ export class App extends Component {
     this.state = {
       hoveredObject: null,
       year: 2017,
-      layers: []
     };
+    this.state.layers = this.createLayers();
     this._onHover = this._onHover.bind(this);
     this._setTime = this._setTime.bind(this);
     this._renderTooltip = this._renderTooltip.bind(this);
     this._renderOptions = this._renderOptions.bind(this);
     this.redraw = this.redraw.bind(this);
-    // this.render = this.render.bind(this);
-
-    const deckgl = new DeckGL.DeckGL({
-      container: 'map',
-      // mapboxApiAccessToken: '<your_token_here>',
-      // mapStyle: 'mapbox://styles/mapbox/light-v9',
-      latitude: 0,
-      longitude: 0,
-      zoom: 0,
-      maxZoom: 16,
-      pitch: 0,
-      layers: [] });
+    this.createLayers = this.createLayers.bind(this);
   }
 
   _onHover({x, y, object}) {
@@ -87,7 +76,7 @@ export class App extends Component {
     );
   }
 
-  redraw() {
+  createLayers() {
     const {year} = this.state;
 
     const t = year;
@@ -129,24 +118,33 @@ export class App extends Component {
       dataChanged: true
     });
 
-    this.setState({layers: [layer]});
+    return [layer];
+  }
+
+  redraw() {
+    this.setState({layers: this.createLayers()});
   }
 
   render() {
     const {layers, year} = this.state;
     console.log('Rendering at ' + year + ' for ' + layers);
-    return (
-      <DeckGL
-        width="100%"
-        height="100%"
-        controller={true}
-        initialViewState={INITIAL_VIEW_STATE}
-        layers={layers}
-      >
-        {this._renderTooltip}
-        {this._renderOptions}
-      </DeckGL>
-    );
+
+    if(this.deckgl === undefined) {
+      this.deckGL = (
+          <DeckGL
+              width="100%"
+              height="100%"
+              controller={true}
+              initialViewState={INITIAL_VIEW_STATE}
+              layers={layers}
+          >
+            {this._renderTooltip}
+            {this._renderOptions}
+          </DeckGL>
+      );
+    }
+
+    return this.deckGL;
   }
 }
 
