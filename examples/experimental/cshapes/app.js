@@ -21,7 +21,7 @@ export class App extends Component {
       hoveredObject: null,
       year: 2017,
     };
-    this.state.layers = this.createLayers();
+    this.state.layers = this.createLayers(2017);
     this._onHover = this._onHover.bind(this);
     this._setTime = this._setTime.bind(this);
     this._renderTooltip = this._renderTooltip.bind(this);
@@ -37,7 +37,7 @@ export class App extends Component {
   _setTime(t) {
     this.setState({
       year: t,
-      // layers: this.createLayers()
+      layers: this.createLayers(t)
     });
     // const {time} = this.state;
     // t = date;
@@ -72,6 +72,7 @@ export class App extends Component {
             min="1886"
             max="2017"
             value={year}
+            class="timeslider"
             onChange={e => this._setTime(e.target.value)}
           />
         </div>
@@ -79,13 +80,13 @@ export class App extends Component {
     );
   }
 
-  createLayers() {
+  createLayers(t) {
     const {year} = this.state;
 
-    const t = year;
+    // const t = year;
 
     function filterActive(item, props) {
-      if (item.properties.from <= year && item.properties.to >= year) {
+      if (item.properties.from <= t && item.properties.to >= t) {
         return false;
       }
       return true;
@@ -124,7 +125,7 @@ export class App extends Component {
     });
 
     function filterChanged(item, props) {
-      if (item.properties.from >= year && item.properties.from <=year) {
+      if (item.properties.from >= t && item.properties.from <=t) {
         return false;
       }
       return true;
@@ -170,7 +171,7 @@ export class App extends Component {
 
   render() {
     const {year} = this.state;
-    const layers = this.createLayers();
+    const {layers} = this.state;
     console.log('Rendering at ' + year + ' for ' + layers);
 
     if(this.deckgl === undefined) {
