@@ -24,7 +24,7 @@ const animation = {
   now: null,
   then: null,
   elapsed: null
-}
+};
 
 export class App extends Component {
   constructor(props) {
@@ -32,7 +32,7 @@ export class App extends Component {
 
     this.state = {
       hoveredObject: null,
-      year: 2017,
+      year: 2017
     };
     this.state.layers = this.createLayers(2017);
     this._onHover = this._onHover.bind(this);
@@ -67,7 +67,6 @@ export class App extends Component {
   }
 
   animate() {
-
     // request another frame
 
     window.requestAnimationFrame(this.animate.bind(this));
@@ -80,7 +79,6 @@ export class App extends Component {
     // if enough time has elapsed, draw the next frame
 
     if (animation.elapsed > animation.fpsInterval) {
-
       // Get ready for next frame by setting then=now, but also adjust for your
       // specified fpsInterval not being a multiple of RAF's interval (16.7ms)
       animation.then = animation.now - (animation.elapsed % animation.fpsInterval);
@@ -92,7 +90,7 @@ export class App extends Component {
     // this._animationFrame = window.requestAnimationFrame(this._animate.bind(this));
 
     var t = this.state.year + 1;
-    if(t > 2017) {
+    if (t > 2017) {
       t = 1886;
     }
     this._setTime(t);
@@ -122,14 +120,16 @@ export class App extends Component {
           <div>Year: {year}</div>
           <div>
             <input
-            type="range"
-            min="1886"
-            max="2017"
-            value={year}
-            class="timeslider"
-            onChange={e => this._setTime(e.target.value)}
+              type="range"
+              min="1886"
+              max="2017"
+              value={year}
+              class="timeslider"
+              onChange={e => this._setTime(e.target.value)}
             />
-            <button type="button" onClick={e => this.startAnimating(3)}>Animate</button>
+            <button type="button" onClick={e => this.startAnimating(3)}>
+              Animate
+            </button>
           </div>
         </div>
       )
@@ -183,12 +183,11 @@ export class App extends Component {
     const trail = 5;
 
     function filterChanged(item, props) {
-      if (item.properties.gwsyear  <= t && item.properties.gwsyear >= t - trail) {
+      if (item.properties.gwsyear <= t && item.properties.gwsyear >= t - trail) {
         return false;
       }
       return true;
     }
-
 
     const layer2 = new GeoJsonLayerWithFilter({
       id: 'changed',
@@ -206,8 +205,18 @@ export class App extends Component {
       getElevation: f => (f.properties.gwsyear - 1886) * 3000,
       // getFillColor: f=> colorScale(f.properties.growth),
       // getFillColor: f => [t / 10, t / 10, t / 10],
-      getFillColor: f => [255, this.getColor(t, f, trail), this.getColor(t, f, trail), this.getAlpha(t, f, trail)],
-      getLineColor: f => [255, this.getColor(t, f, trail), this.getColor(t, f, trail), this.getAlpha(t, f, trail)],
+      getFillColor: f => [
+        255,
+        this.getColor(t, f, trail),
+        this.getColor(t, f, trail),
+        this.getAlpha(t, f, trail)
+      ],
+      getLineColor: f => [
+        255,
+        this.getColor(t, f, trail),
+        this.getColor(t, f, trail),
+        this.getAlpha(t, f, trail)
+      ],
       getFilterValue: f => f.props.gweyear,
       updateTriggers: {
         getFillColor: t,
@@ -216,7 +225,7 @@ export class App extends Component {
       },
       getLineWidth: 10,
       pickable: false,
-      autoHighlight: false,
+      autoHighlight: false
       // onHover: this._onHover,
       // dataChanged: true
     });
@@ -225,17 +234,17 @@ export class App extends Component {
   }
 
   getColor(t, f, trail) {
-    const elapsed = (t - f.properties.gwsyear);
-    const ratio = 1 - (elapsed / trail);
-    const number = 255 * (Math.pow(ratio, 3));
+    const elapsed = t - f.properties.gwsyear;
+    const ratio = 1 - elapsed / trail;
+    const number = 255 * Math.pow(ratio, 3);
     // console.log(t + ", " + f.properties.gwsyear + " -> " + elapsed + ", " + number);
     return 255 - number;
   }
 
   getAlpha(t, f, trail) {
-    const elapsed = (t - f.properties.gwsyear);
-    const ratio = 1 - (elapsed / trail);
-    const number = 255 * (Math.pow(ratio, 3));
+    const elapsed = t - f.properties.gwsyear;
+    const ratio = 1 - elapsed / trail;
+    const number = 255 * Math.pow(ratio, 3);
     // console.log(t + ", " + f.properties.gwsyear + " -> " + elapsed + ", " + number);
     return number;
   }
@@ -249,18 +258,18 @@ export class App extends Component {
     const {layers} = this.state;
     console.log('Rendering at ' + year + ' for ' + layers);
 
-    if(this.deckgl === undefined) {
+    if (this.deckgl === undefined) {
       this.deckGL = (
-          <DeckGL
-              width="100%"
-              height="100%"
-              controller={true}
-              initialViewState={INITIAL_VIEW_STATE}
-              layers={layers}
-          >
-            {this._renderTooltip}
-            {this._renderOptions}
-          </DeckGL>
+        <DeckGL
+          width="100%"
+          height="100%"
+          controller={true}
+          initialViewState={INITIAL_VIEW_STATE}
+          layers={layers}
+        >
+          {this._renderTooltip}
+          {this._renderOptions}
+        </DeckGL>
       );
     }
 
