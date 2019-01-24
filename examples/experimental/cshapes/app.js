@@ -104,9 +104,9 @@ export class App extends Component {
       hoveredObject && (
         <div className="tooltip" style={{top: y, left: x}}>
           <div>
-            <div>{hoveredObject.properties.statename}</div>
+            <div>{hoveredObject.properties.cntry_name}</div>
             <div>
-              {hoveredObject.properties.from} - {hoveredObject.properties.to}
+              {hoveredObject.properties.gwsyear} - {hoveredObject.properties.gweyear}
             </div>
           </div>
         </div>
@@ -142,7 +142,7 @@ export class App extends Component {
     // const t = year;
 
     function filterActive(item, props) {
-      if (item.properties.from <= t && item.properties.to >= t) {
+      if (item.properties.gwsyear <= t && item.properties.gweyear >= t) {
         return false;
       }
       return true;
@@ -162,12 +162,12 @@ export class App extends Component {
       lineWidthMinPixels: 1,
       // fp64: true,
       // lightSettings: LIGHT_SETTINGS,
-      getElevation: f => (f.properties.from - 1886) * 3000,
+      getElevation: f => (f.properties.gwsyear - 1886) * 3000,
       // getFillColor: f=> colorScale(f.properties.growth),
       // getFillColor: f => [t / 10, t / 10, t / 10],
       getFillColor: f => [100, 100, 100],
       getLineColor: f => [255, 255, 255],
-      getFilterValue: f => f.props.to,
+      getFilterValue: f => f.props.gweyear,
       updateTriggers: {
         getFillColor: t,
         getElevation: t,
@@ -183,7 +183,7 @@ export class App extends Component {
     const trail = 5;
 
     function filterChanged(item, props) {
-      if (item.properties.from  <= t && item.properties.from >= t - trail) {
+      if (item.properties.gwsyear  <= t && item.properties.gwsyear >= t - trail) {
         return false;
       }
       return true;
@@ -203,12 +203,12 @@ export class App extends Component {
       lineWidthMinPixels: 2,
       // fp64: true,
       // lightSettings: LIGHT_SETTINGS,
-      getElevation: f => (f.properties.from - 1886) * 3000,
+      getElevation: f => (f.properties.gwsyear - 1886) * 3000,
       // getFillColor: f=> colorScale(f.properties.growth),
       // getFillColor: f => [t / 10, t / 10, t / 10],
       getFillColor: f => [255, this.getColor(t, f, trail), this.getColor(t, f, trail), this.getAlpha(t, f, trail)],
       getLineColor: f => [255, this.getColor(t, f, trail), this.getColor(t, f, trail), this.getAlpha(t, f, trail)],
-      getFilterValue: f => f.props.to,
+      getFilterValue: f => f.props.gweyear,
       updateTriggers: {
         getFillColor: t,
         getElevation: t,
@@ -225,18 +225,18 @@ export class App extends Component {
   }
 
   getColor(t, f, trail) {
-    const elapsed = (t - f.properties.from);
+    const elapsed = (t - f.properties.gwsyear);
     const ratio = 1 - (elapsed / trail);
     const number = 255 * (Math.pow(ratio, 3));
-    // console.log(t + ", " + f.properties.from + " -> " + elapsed + ", " + number);
+    // console.log(t + ", " + f.properties.gwsyear + " -> " + elapsed + ", " + number);
     return 255 - number;
   }
 
   getAlpha(t, f, trail) {
-    const elapsed = (t - f.properties.from);
+    const elapsed = (t - f.properties.gwsyear);
     const ratio = 1 - (elapsed / trail);
     const number = 255 * (Math.pow(ratio, 3));
-    // console.log(t + ", " + f.properties.from + " -> " + elapsed + ", " + number);
+    // console.log(t + ", " + f.properties.gwsyear + " -> " + elapsed + ", " + number);
     return number;
   }
 
