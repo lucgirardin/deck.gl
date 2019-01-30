@@ -74,9 +74,9 @@ export function separateGeojsonFeatures(features, filter) {
   for (let featureIndex = 0; featureIndex < features.length; featureIndex++) {
     const feature = features[featureIndex];
 
-    assert(feature && feature.geometry, 'GeoJSON does not have geometry');
-
     if (!filter(feature)) {
+      assert(feature && feature.geometry, 'GeoJSON does not have geometry');
+
       const {geometry} = feature;
 
       const sourceFeature = {

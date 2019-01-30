@@ -124,7 +124,7 @@ export class App extends Component {
               min="1886"
               max="2017"
               value={year}
-              class="timeslider"
+              className="timeslider"
               onChange={e => this._setTime(e.target.value)}
             />
             <button type="button" onClick={e => this.startAnimating(3)}>
