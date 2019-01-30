@@ -143,7 +143,7 @@ export class App extends Component {
     // const t = year;
 
     function filterActive(item, props) {
-      if (item.geometry != undefined && item.properties.from <= t && item.properties.to >= t) {
+      if (item.geometry != undefined && item.properties.year == t) {
         return false;
       }
       return true;
@@ -190,48 +190,48 @@ export class App extends Component {
       return true;
     }
 
-    const layer2 = new GeoJsonLayerWithFilter({
-      id: 'changed',
-      filter: filterChanged,
-      data: SAMPLE_GEOEPR,
-      opacity: 1,
-      stroked: true,
-      filled: true,
-      extruded: false,
-      wireframe: true,
-      lineWidthScale: 20,
-      lineWidthMinPixels: 2,
-      // fp64: true,
-      // lightSettings: LIGHT_SETTINGS,
-      getElevation: f => (f.properties.from - 1946) * 3000,
-      // getFillColor: f=> colorScale(f.properties.growth),
-      // getFillColor: f => [t / 10, t / 10, t / 10],
-      getFillColor: f => [
-        255,
-        this.getColor(t, f, trail),
-        this.getColor(t, f, trail),
-        this.getAlpha(t, f, trail)
-      ],
-      getLineColor: f => [
-        255,
-        this.getColor(t, f, trail),
-        this.getColor(t, f, trail),
-        this.getAlpha(t, f, trail)
-      ],
-      getFilterValue: f => f.properties.to,
-      updateTriggers: {
-        getFillColor: t,
-        getElevation: t,
-        data: t
-      },
-      getLineWidth: 10,
-      pickable: false,
-      autoHighlight: false
-      // onHover: this._onHover,
-      // dataChanged: true
-    });
+    // const layer2 = new GeoJsonLayerWithFilter({
+    //   id: 'changed',
+    //   filter: filterChanged,
+    //   data: SAMPLE_GEOEPR,
+    //   opacity: 1,
+    //   stroked: true,
+    //   filled: true,
+    //   extruded: false,
+    //   wireframe: true,
+    //   lineWidthScale: 20,
+    //   lineWidthMinPixels: 2,
+    //   // fp64: true,
+    //   // lightSettings: LIGHT_SETTINGS,
+    //   getElevation: f => (f.properties.from - 1946) * 3000,
+    //   // getFillColor: f=> colorScale(f.properties.growth),
+    //   // getFillColor: f => [t / 10, t / 10, t / 10],
+    //   getFillColor: f => [
+    //     255,
+    //     this.getColor(t, f, trail),
+    //     this.getColor(t, f, trail),
+    //     this.getAlpha(t, f, trail)
+    //   ],
+    //   getLineColor: f => [
+    //     255,
+    //     this.getColor(t, f, trail),
+    //     this.getColor(t, f, trail),
+    //     this.getAlpha(t, f, trail)
+    //   ],
+    //   getFilterValue: f => f.properties.to,
+    //   updateTriggers: {
+    //     getFillColor: t,
+    //     getElevation: t,
+    //     data: t
+    //   },
+    //   getLineWidth: 10,
+    //   pickable: false,
+    //   autoHighlight: false
+    //   // onHover: this._onHover,
+    //   // dataChanged: true
+    // });
 
-    return [layer, layer2];
+    return [layer];
   }
 
   getColor(t, f, trail) {

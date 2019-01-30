@@ -15,7 +15,6 @@ export default class GeoJsonLayerWithFilter extends GeoJsonLayer {
     if (layersChanged || changeFlags.dataChanged + this.state) {
       const data = props.data;
       const features = getGeojsonFeatures(data);
-      console.log(data);
       if (layersChanged) {
         this.state.features = separateGeojsonFeatures(features, props.filter);
       } else {
