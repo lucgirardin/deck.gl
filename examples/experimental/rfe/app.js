@@ -1,12 +1,27 @@
 import React, {Component} from 'react';
 import {render} from 'react-dom';
-import DeckGL from 'deck.gl';
+import DeckGL, {MapController, FlyToInterpolator, TRANSITION_EVENTS} from 'deck.gl';
 import {StaticMap} from 'react-map-gl';
 import GeoJsonLayerWithFilter from './geojson-layer';
 
 const SAMPLE_GEOEPR = 'rfe.geojson';
 
 const MAPBOX_ACCESS_TOKEN = "pk.eyJ1IjoibHVjZ2lyYXJkaW4iLCJhIjoiY2pyOTRiNWNiMDY0azQzcnBlczAxN2Y3YiJ9.DWErygTDXS_ludBsSNyPTw";
+
+const interruptionStyles = [
+  {
+    title: 'BREAK',
+    style: TRANSITION_EVENTS.BREAK
+  },
+  {
+    title: 'SNAP_TO_END',
+    style: TRANSITION_EVENTS.SNAP_TO_END
+  },
+  {
+    title: 'IGNORE',
+    style: TRANSITION_EVENTS.IGNORE
+  }
+];
 
 const INITIAL_VIEW_STATE = {
   latitude: 0,
@@ -35,16 +50,48 @@ export class App extends Component {
 
     this.state = {
       hoveredObject: null,
-      year: 2017
+      year: 2017,
+      viewState: {
+        latitude: 0,
+        longitude: 0,
+        zoom: 1,
+        bearing: 0,
+        pitch: 0
+      }
     };
+
+    this._interruptionStyle = TRANSITION_EVENTS.BREAK;
+
     this.state.layers = this.createLayers(2017);
     this._onHover = this._onHover.bind(this);
     this._setTime = this._setTime.bind(this);
     this._animate = this._animate.bind(this);
+    this._easeTo = this._easeTo.bind(this);
     this._renderTooltip = this._renderTooltip.bind(this);
     this._renderOptions = this._renderOptions.bind(this);
     this.redraw = this.redraw.bind(this);
     this.createLayers = this.createLayers.bind(this);
+    this._onViewStateChange = this._onViewStateChange.bind(this);
+  }
+
+  _easeTo(long, lat, z) {
+    this.setState({
+      viewState: {
+        ...this.state.viewState,
+        longitude: long,
+        latitude: lat,
+        zoom: z,
+        // pitch: 0,
+        // bearing: 0,
+        transitionDuration: 8000,
+        transitionInterpolator: new FlyToInterpolator(),
+        transitionInterruption: this._interruptionStyle
+      }
+    });
+  }
+
+  _onViewStateChange({viewState}) {
+    this.setState({viewState});
   }
 
   _onHover({x, y, object}) {
@@ -138,6 +185,21 @@ export class App extends Component {
             <button type="button" onClick={e => this.startAnimating(3)}>
               Animate
             </button>
+            <button type="button" onClick={e => this._easeTo(-90.5069, 14.6349, 5)}>
+              Guatemala
+            </button>
+            <button type="button" onClick={e => this._easeTo(80.7718, 7.8731, 5)}>
+              Sri Lanka
+            </button>
+            <button type="button" onClick={e => this._easeTo(8.6753, 9.0820, 5)}>
+              Nigeria
+            </button>
+            <button type="button" onClick={e => this._easeTo(8.2275, 46.8182, 5)}>
+              Switzerland
+            </button>
+            <button type="button" onClick={e => this._easeTo(113.9213, -0.7893, 4)}>
+              Indonesia
+            </button>
           </div>
         </div>
       )
@@ -190,7 +252,7 @@ export class App extends Component {
       filled: true,
       extruded: true,
       wireframe: true,
-      lineWidthScale: 20,
+      lineWidthScale: 1,
       lineWidthMinPixels: 1,
       // fp64: true,
       // lightSettings: LIGHT_SETTINGS,
@@ -205,7 +267,7 @@ export class App extends Component {
         getElevation: t,
         data: t
       },
-      getLineWidth: 10,
+      getLineWidth: 1,
       pickable: true,
       autoHighlight: true,
       onHover: this._onHover,
@@ -286,6 +348,7 @@ export class App extends Component {
   }
 
   render() {
+    const {viewState} = this.state;
     const {year} = this.state;
     const {layers} = this.state;
     console.log('Rendering at ' + year + ' for ' + layers);
@@ -295,9 +358,11 @@ export class App extends Component {
         <DeckGL
           width="100%"
           height="100%"
-          controller={true}
+          controller={MapController}
+          viewState={viewState}
           initialViewState={INITIAL_VIEW_STATE}
           layers={layers}
+          onViewStateChange={this._onViewStateChange}
         >
           <StaticMap
               mapStyle="mapbox://styles/mapbox/satellite-v9"
