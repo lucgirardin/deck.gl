@@ -102,10 +102,14 @@ export class App extends Component {
       hoveredObject && (
         <div className="tooltip" style={{top: y, left: x}}>
           <div>
-            <div>{hoveredObject.properties.group}</div>
-            <div>{hoveredObject.properties.statename}</div>
             <div>
-              {hoveredObject.properties.from} - {hoveredObject.properties.to}
+              {hoveredObject.properties.countryname} ({hoveredObject.properties.gwid})
+            </div>
+            <div>
+              {hoveredObject.properties.groupname} ({hoveredObject.properties.gwgroupid})
+            </div>
+            <div>
+              {hoveredObject.properties.year}
             </div>
           </div>
         </div>
@@ -157,13 +161,13 @@ export class App extends Component {
       opacity: 0.5,
       stroked: true,
       filled: true,
-      extruded: false,
+      extruded: true,
       wireframe: true,
       lineWidthScale: 20,
       lineWidthMinPixels: 1,
       // fp64: true,
       // lightSettings: LIGHT_SETTINGS,
-      getElevation: f => (f.properties.from - 1946) * 3000,
+      getElevation: f => (f.properties.groupsize / f.properties.area_sqkm) * 300000000,
       // getFillColor: f=> colorScale(f.properties.growth),
       // getFillColor: f  => [t / 10, t / 10, t / 10],
       getFillColor: f => [100, 100, 100],
