@@ -153,6 +153,30 @@ export class App extends Component {
       return true;
     }
 
+    const COLOR_SCALE = [
+      [0, 104, 55], // Monopoly
+      [25, 150, 68], // Dominant
+      [124, 198, 97], // Senior partner
+      [179, 222, 114], // Junior partner
+      [253, 254, 189], // Self-exclusion
+      [248, 125, 78], // Powerless
+      [215, 30, 30], // Discriminated
+      [165, 0, 38] // State collapse
+    ];
+
+    function colorScale(x) {
+      if (x == undefined || x == null) {
+        return [100, 100, 100];
+      }
+      if(x < 0) {
+        return [100, 100, 100];
+      }
+      if(x > COLOR_SCALE.length - 1) {
+        return [100, 100, 100];
+      }
+      return COLOR_SCALE[x];
+    }
+
     console.log('Redrawing at ' + t);
     const layer = new GeoJsonLayerWithFilter({
       id: 'active',
@@ -170,7 +194,7 @@ export class App extends Component {
       getElevation: f => (f.properties.groupsize / f.properties.area_sqkm) * 300000000,
       // getFillColor: f=> colorScale(f.properties.growth),
       // getFillColor: f  => [t / 10, t / 10, t / 10],
-      getFillColor: f => [100, 100, 100],
+      getFillColor: f => colorScale(f.properties.statusid),
       getLineColor: f => [255, 255, 255],
       getFilterValue: f => f.properties.to,
       updateTriggers: {
