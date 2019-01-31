@@ -6,7 +6,8 @@ import GeoJsonLayerWithFilter from './geojson-layer';
 
 const SAMPLE_GEOEPR = 'rfe.geojson';
 
-const MAPBOX_ACCESS_TOKEN = "pk.eyJ1IjoibHVjZ2lyYXJkaW4iLCJhIjoiY2pyOTRiNWNiMDY0azQzcnBlczAxN2Y3YiJ9.DWErygTDXS_ludBsSNyPTw";
+const MAPBOX_ACCESS_TOKEN =
+  'pk.eyJ1IjoibHVjZ2lyYXJkaW4iLCJhIjoiY2pyOTRiNWNiMDY0azQzcnBlczAxN2Y3YiJ9.DWErygTDXS_ludBsSNyPTw';
 
 const interruptionStyles = [
   {
@@ -44,7 +45,6 @@ const animation = {
 };
 
 export class App extends Component {
-
   constructor(props) {
     super(props);
 
@@ -158,9 +158,7 @@ export class App extends Component {
             <div>
               {hoveredObject.properties.groupname} ({hoveredObject.properties.gwgroupid})
             </div>
-            <div>
-              {hoveredObject.properties.year}
-            </div>
+            <div>{hoveredObject.properties.year}</div>
           </div>
         </div>
       )
@@ -191,7 +189,7 @@ export class App extends Component {
             <button type="button" onClick={e => this._easeTo(80.7718, 7.8731, 5)}>
               Sri Lanka
             </button>
-            <button type="button" onClick={e => this._easeTo(8.6753, 9.0820, 5)}>
+            <button type="button" onClick={e => this._easeTo(8.6753, 9.082, 5)}>
               Nigeria
             </button>
             <button type="button" onClick={e => this._easeTo(8.2275, 46.8182, 5)}>
@@ -230,13 +228,13 @@ export class App extends Component {
     ];
 
     function colorScale(x) {
-      if (x == undefined || x == null) {
+      if (x == undefined || x == null) {
         return [100, 100, 100];
       }
-      if(x < 0) {
+      if (x < 0) {
         return [100, 100, 100];
       }
-      if(x > COLOR_SCALE.length - 1) {
+      if (x > COLOR_SCALE.length - 1) {
         return [100, 100, 100];
       }
       return COLOR_SCALE[x];
@@ -256,7 +254,7 @@ export class App extends Component {
       lineWidthMinPixels: 1,
       // fp64: true,
       // lightSettings: LIGHT_SETTINGS,
-      getElevation: f => (f.properties.groupsize / f.properties.area_sqkm) * 300000000,
+      getElevation: f => (f.properties.statusid + 1) * 3000,
       // getFillColor: f=> colorScale(f.properties.growth),
       // getFillColor: f  => [t / 10, t / 10, t / 10],
       getFillColor: f => colorScale(f.properties.statusid),
@@ -277,7 +275,11 @@ export class App extends Component {
     const trail = 5;
 
     function filterChanged(item, props) {
-      if (item.geometry != undefined && item.properties.from <= t && item.properties.from >= t - trail) {
+      if (
+        item.geometry != undefined &&
+        item.properties.from <= t &&
+        item.properties.from >= t - trail
+      ) {
         return false;
       }
       return true;
@@ -365,8 +367,9 @@ export class App extends Component {
           onViewStateChange={this._onViewStateChange}
         >
           <StaticMap
-              mapStyle="mapbox://styles/mapbox/satellite-v9"
-              mapboxApiAccessToken={MAPBOX_ACCESS_TOKEN} />
+            mapStyle="mapbox://styles/mapbox/satellite-v9"
+            mapboxApiAccessToken={MAPBOX_ACCESS_TOKEN}
+          />
           {this._renderTooltip}
           {this._renderOptions}
         </DeckGL>

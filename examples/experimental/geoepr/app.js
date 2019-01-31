@@ -184,7 +184,11 @@ export class App extends Component {
     const trail = 5;
 
     function filterChanged(item, props) {
-      if (item.geometry != undefined && item.properties.from <= t && item.properties.from >= t - trail) {
+      if (
+        item.geometry != undefined &&
+        item.properties.from <= t &&
+        item.properties.from >= t - trail
+      ) {
         return false;
       }
       return true;
