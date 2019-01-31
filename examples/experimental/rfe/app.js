@@ -6,6 +6,8 @@ import GeoJsonLayerWithFilter from './geojson-layer';
 
 const SAMPLE_GEOEPR = 'rfe.geojson';
 
+const MAPBOX_ACCESS_TOKEN = "pk.eyJ1IjoibHVjZ2lyYXJkaW4iLCJhIjoiY2pyOTRiNWNiMDY0azQzcnBlczAxN2Y3YiJ9.DWErygTDXS_ludBsSNyPTw";
+
 const INITIAL_VIEW_STATE = {
   latitude: 0,
   longitude: 0,
@@ -27,6 +29,7 @@ const animation = {
 };
 
 export class App extends Component {
+
   constructor(props) {
     super(props);
 
@@ -296,6 +299,9 @@ export class App extends Component {
           initialViewState={INITIAL_VIEW_STATE}
           layers={layers}
         >
+          <StaticMap
+              mapStyle="mapbox://styles/mapbox/satellite-v9"
+              mapboxApiAccessToken={MAPBOX_ACCESS_TOKEN} />
           {this._renderTooltip}
           {this._renderOptions}
         </DeckGL>
