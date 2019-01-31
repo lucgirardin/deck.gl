@@ -27,7 +27,7 @@ const interruptionStyles = [
 const INITIAL_VIEW_STATE = {
   latitude: 0,
   longitude: 0,
-  zoom: 1,
+  zoom: 2,
   bearing: 0,
   pitch: 0
 };
@@ -54,9 +54,9 @@ export class App extends Component {
       viewState: {
         latitude: 0,
         longitude: 0,
-        zoom: 1,
+        zoom: 2.7,
         bearing: 0,
-        pitch: 0
+        pitch: 60
       }
     };
 
@@ -67,6 +67,7 @@ export class App extends Component {
     this._setTime = this._setTime.bind(this);
     this._animate = this._animate.bind(this);
     this._easeTo = this._easeTo.bind(this);
+    this._renderCaption = this._renderCaption.bind(this);
     this._renderTooltip = this._renderTooltip.bind(this);
     this._renderOptions = this._renderOptions.bind(this);
     this.redraw = this.redraw.bind(this);
@@ -159,9 +160,28 @@ export class App extends Component {
               {hoveredObject.properties.groupname} ({hoveredObject.properties.gwgroupid})
             </div>
             <div>{hoveredObject.properties.year}</div>
+            <div>
+              {hoveredObject.properties.statusname} ({hoveredObject.properties.statusid})
+            </div>
+            <div>
+              Relevant: {hoveredObject.properties.isrelevant}, Statewide: {hoveredObject.properties.geo_statewide}
+            </div>
           </div>
         </div>
       )
+    );
+  }
+
+  _renderCaption() {
+    const {year} = this.state;
+    return (
+          <div className="caption">
+            <div>
+              <div>
+                {year}
+              </div>
+            </div>
+          </div>
     );
   }
 
@@ -180,7 +200,7 @@ export class App extends Component {
               className="timeslider"
               onChange={e => this._setTime(e.target.value)}
             />
-            <button type="button" onClick={e => this.startAnimating(3)}>
+            <button type="button" onClick={e => this.startAnimating(1)}>
               Animate
             </button>
             <button type="button" onClick={e => this._easeTo(-90.5069, 14.6349, 5)}>
@@ -227,10 +247,11 @@ export class App extends Component {
       [165, 0, 38] // State collapse
     ];
 
-    function colorScale(x) {
-      if (x == undefined || x == null) {
+    function colorScale(status) {
+      if (status == undefined || status == null) {
         return [100, 100, 100];
       }
+      const x = status - 1;
       if (x < 0) {
         return [100, 100, 100];
       }
@@ -249,12 +270,12 @@ export class App extends Component {
       stroked: true,
       filled: true,
       extruded: true,
-      wireframe: true,
+      wireframe: false,
       lineWidthScale: 1,
       lineWidthMinPixels: 1,
       // fp64: true,
       // lightSettings: LIGHT_SETTINGS,
-      getElevation: f => (f.properties.statusid + 1) * 3000,
+      getElevation: f => (f.properties.statusid + 1) * 5000,
       // getFillColor: f=> colorScale(f.properties.growth),
       // getFillColor: f  => [t / 10, t / 10, t / 10],
       getFillColor: f => colorScale(f.properties.statusid),
@@ -269,7 +290,10 @@ export class App extends Component {
       pickable: true,
       autoHighlight: true,
       onHover: this._onHover,
-      dataChanged: true
+      dataChanged: true,
+      parameters: {
+        depthTest: true
+      },
     });
 
     const trail = 5;
@@ -366,12 +390,13 @@ export class App extends Component {
           layers={layers}
           onViewStateChange={this._onViewStateChange}
         >
-          <StaticMap
-            mapStyle="mapbox://styles/mapbox/satellite-v9"
+{/*          <StaticMap
+            mapStyle="mapbox://styles/mapbox/dark-v9"
             mapboxApiAccessToken={MAPBOX_ACCESS_TOKEN}
-          />
+          />*/}
           {this._renderTooltip}
           {this._renderOptions}
+          {this._renderCaption}
         </DeckGL>
       );
     }
