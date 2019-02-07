@@ -54,7 +54,7 @@ export class App extends Component {
       viewState: {
         latitude: 0,
         longitude: 0,
-        zoom: 2.7,
+        zoom: 2.1,
         bearing: 0,
         pitch: 60
       }
