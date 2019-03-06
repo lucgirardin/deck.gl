@@ -30,15 +30,6 @@ export const COLOR_SCALE = scaleThreshold()
     [128, 0, 38]
   ]);
 
-const LIGHT_SETTINGS = {
-  lightsPosition: [-125, 50.5, 5000, -122.8, 48.5, 8000],
-  ambientRatio: 0.2,
-  diffuseRatio: 0.5,
-  specularRatio: 0.3,
-  lightsStrength: [2.0, 0.0, 1.0, 0.0],
-  numberOfLights: 2
-};
-
 export const INITIAL_VIEW_STATE = {
   latitude: 49.254,
   longitude: -123.13,
@@ -79,7 +70,6 @@ export class App extends Component {
         getElevation: f => Math.sqrt(f.properties.valuePerSqm) * 10,
         getFillColor: f => COLOR_SCALE(f.properties.growth),
         getLineColor: [255, 255, 255],
-        lightSettings: LIGHT_SETTINGS,
         pickable: true,
         onHover: this._onHover
       })

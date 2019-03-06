@@ -28,6 +28,9 @@ import './shaderlib';
 // Core Library
 export {COORDINATE_SYSTEM} from './lib/constants';
 
+// Effects
+export {default as LightingEffect} from './effects/lighting-effect';
+
 // Experimental Pure JS (non-React) bindings
 export {default as Deck} from './lib/deck';
 
@@ -35,6 +38,7 @@ export {default as LayerManager} from './lib/layer-manager';
 export {default as AttributeManager} from './lib/attribute-manager';
 export {default as Layer} from './lib/layer';
 export {default as CompositeLayer} from './lib/composite-layer';
+export {default as DeckRenderer} from './lib/deck-renderer';
 
 // Viewports
 export {default as Viewport} from './viewports/viewport';
@@ -43,7 +47,6 @@ export {default as WebMercatorViewport} from './viewports/web-mercator-viewport'
 // Shader modules
 export {default as project} from './shaderlib/project/project';
 export {default as project64} from './shaderlib/project64/project64';
-export {default as lighting} from './shaderlib/lighting/lighting';
 
 export {default as View} from './views/view';
 export {default as MapView} from './views/map-view';
@@ -64,9 +67,7 @@ export {default as _OrthographicController} from './controllers/orthographic-con
 // EXPERIMENTAL EXPORTS
 
 // Experimental Effects (non-React) bindings
-export {default as _EffectManager} from './experimental/lib/effect-manager';
-export {default as _Effect} from './experimental/lib/effect';
-export {default as _ReflectionEffect} from './experimental/reflection-effect/reflection-effect';
+export {default as Effect} from './lib/effect';
 
 // Eperimental Transitions
 export {TRANSITION_EVENTS} from './controllers/transition-manager';

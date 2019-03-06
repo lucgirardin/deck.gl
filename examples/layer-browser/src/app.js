@@ -3,7 +3,6 @@
 // deck.gl ES6 components
 import {COORDINATE_SYSTEM, View, MapView, FirstPersonView, OrbitView, MapController} from 'deck.gl';
 import {_OrbitController as OrbitController} from '@deck.gl/core';
-import {_ReflectionEffect as ReflectionEffect} from '@deck.gl/core';
 
 // deck.gl react components
 import DeckGL from '@deck.gl/react';
@@ -93,8 +92,6 @@ export default class App extends PureComponent {
 
       enableDepthPickOnClick: false
     };
-
-    this._effects = [new ReflectionEffect()];
   }
 
   componentDidUpdate(prevProps, prevState) {
@@ -164,14 +161,18 @@ export default class App extends PureComponent {
   }
 
   _renderExampleLayer(example, settings, index) {
-    const {layer: Layer, props, getData} = example;
+    const {layer: Layer, props, getData, initialize, isInitialized} = example;
 
-    const layerProps = Object.assign({}, props, settings);
-
-    if (getData) {
-      Object.assign(layerProps, {data: getData()});
+    if (getData && !props.data) {
+      props.data = getData();
     }
 
+    if (initialize && !isInitialized) {
+      initialize();
+      example.isInitialized = true;
+    }
+
+    const layerProps = Object.assign({}, props, settings);
     Object.assign(layerProps, {
       modelMatrix: this._getModelMatrix(index, layerProps.coordinateSystem)
     });

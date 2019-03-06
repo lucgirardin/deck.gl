@@ -27,7 +27,8 @@ export default class AttributeTransitionManager {
 
     if (Transform.isSupported(gl)) {
       this.isSupported = true;
-    } else {
+    } else if (gl) {
+      // This class may be instantiated without a WebGL context (e.g. web worker)
       log.warn('WebGL2 not supported by this browser. Transition animation is disabled.')();
     }
   }
@@ -47,7 +48,8 @@ export default class AttributeTransitionManager {
   // Check the latest attributes for updates.
   update({attributes, transitions = {}, numInstances}) {
     this.opts = transitions;
-    this.numInstances = numInstances;
+    // Transform class will crash if elementCount is 0
+    this.numInstances = numInstances || 1;
 
     if (!this.isSupported) {
       return;

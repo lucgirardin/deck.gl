@@ -57,6 +57,10 @@ A custom callback to retrieve the cursor type. Receives an `interactionState` ob
 
 Default: `({isDragging}) => isDragging ? 'grabbing' : 'grab'`
 
+Remarks:
+
+* It is worth noting that when supplying a custom image for the cursor icon, Chrome requires a fallback option to be supplied, otherwise the custom image will not be loaded; e.g. `getCursor={() => 'url(images/custom.png), auto'}`
+
 ##### `views` (Array)
 
 A single `View`, or an array of [`View`](/docs/api-reference/view.md) instances (optionally mixed with [`Viewport`](/docs/api-reference/viewport.md) instances, although the latter is deprecated). If not supplied, a single `MapView` will be created. If an empty array is supplied, no `View` will be shown.
@@ -260,6 +264,18 @@ Callback Arguments:
 Callback, called once after gl context and Deck components (`ViewManager`, `LayerManager`, etc) are created. Can be used to trigger viewport transitions.
 
 
+##### `_onMetrics` (Function, optional) **Experimental**
+
+Called once every second with performance metrics.
+
+Callback arguments:
+
+* `stats` (Object)
+  + `fps` (Number)
+  + `redraw` (Number) - number of times the WebGLContext was rerendered.
+  + `deck.setProps` (Number) - number of times `setProps` was called.
+
+
 ## Methods
 
 ##### `finalize`
@@ -303,7 +319,7 @@ Returns:
 Performs deep picking. Finds all close pickable and visible object at the given screen coordinate, even if those objects are occluded by other objects.
 
 ```js
-deck.pickObject({x, y, radius, layerIds, depth})
+deck.pickMultipleObjects({x, y, radius, layerIds, depth})
 ```
 
 * `x` (Number) - x position in pixels

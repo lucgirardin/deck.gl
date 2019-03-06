@@ -113,14 +113,6 @@ export default class PathLayer extends Layer {
     super.updateState({props, oldProps, changeFlags});
 
     const attributeManager = this.getAttributeManager();
-    if (props.fp64 !== oldProps.fp64) {
-      const {gl} = this.context;
-      if (this.state.model) {
-        this.state.model.delete();
-      }
-      this.setState({model: this._getModel(gl)});
-      attributeManager.invalidateAll();
-    }
 
     const geometryChanged =
       changeFlags.dataChanged ||
@@ -132,11 +124,21 @@ export default class PathLayer extends Layer {
       this.state.pathTesselator.updateGeometry({
         data: props.data,
         getGeometry: props.getPath,
+        positionFormat: props.positionFormat,
         fp64: this.use64bitPositions()
       });
       this.setState({
         numInstances: this.state.pathTesselator.instanceCount
       });
+      attributeManager.invalidateAll();
+    }
+
+    if (props.fp64 !== oldProps.fp64) {
+      const {gl} = this.context;
+      if (this.state.model) {
+        this.state.model.delete();
+      }
+      this.setState({model: this._getModel(gl)});
       attributeManager.invalidateAll();
     }
   }
@@ -305,7 +307,10 @@ export default class PathLayer extends Layer {
   // Override the default picking colors calculation
   calculatePickingColors(attribute) {
     const {pathTesselator} = this.state;
-    attribute.value = pathTesselator.get('pickingColors', attribute.value, this.encodePickingColor);
+    const pickingColor = [];
+    attribute.value = pathTesselator.get('pickingColors', attribute.value, index =>
+      this.encodePickingColor(index, pickingColor)
+    );
   }
 
   clearPickingColor(color) {

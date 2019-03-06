@@ -20,15 +20,20 @@
 
 import './imports-spec';
 import './core';
+
 import './layers';
+import './aggregation-layers';
+import './geo-layers';
+
 import './json';
 
 // TODO - Tests currently only work in browser
 if (typeof document !== 'undefined') {
-  require('./experimental-layers');
   require('./react');
-  require('./lite');
+  require('./main/bundle');
   require('./core/experimental/utils/gpu-grid-aggregator.spec');
-  require('./core/experimental/utils/grid-aggregation-utils.spec');
+  // TODO - This is failing in headless browser test. Might be related to
+  // https://github.com/uber/luma.gl/issues/906
+  // require('./core/experimental/utils/grid-aggregation-utils.spec');
   require('./core/lib/pick-layers.spec');
 }

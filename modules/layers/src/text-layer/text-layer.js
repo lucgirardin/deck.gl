@@ -20,7 +20,23 @@
 
 import {CompositeLayer, log} from '@deck.gl/core';
 import MultiIconLayer from './multi-icon-layer/multi-icon-layer';
-import {makeFontAtlas, DEFAULT_CHAR_SET} from './font-atlas';
+import FontAtlasManager, {
+  DEFAULT_CHAR_SET,
+  DEFAULT_FONT_FAMILY,
+  DEFAULT_FONT_WEIGHT,
+  DEFAULT_FONT_SIZE,
+  DEFAULT_BUFFER,
+  DEFAULT_RADIUS,
+  DEFAULT_CUTOFF
+} from './font-atlas-manager';
+
+const DEFAULT_FONT_SETTINGS = {
+  fontSize: DEFAULT_FONT_SIZE,
+  buffer: DEFAULT_BUFFER,
+  sdf: false,
+  radius: DEFAULT_RADIUS,
+  cutoff: DEFAULT_CUTOFF
+};
 
 const TEXT_ANCHOR = {
   start: 1,
@@ -34,16 +50,19 @@ const ALIGNMENT_BASELINE = {
   bottom: -1
 };
 
-const DEFAULT_FONT_FAMILY = 'Monaco, monospace';
 const DEFAULT_COLOR = [0, 0, 0, 255];
 
 const MISSING_CHAR_WIDTH = 32;
+const FONT_SETTINGS_PROPS = ['fontSize', 'buffer', 'sdf', 'radius', 'cutoff'];
 
 const defaultProps = {
   fp64: false,
   sizeScale: 1,
-  fontFamily: DEFAULT_FONT_FAMILY,
+
   characterSet: DEFAULT_CHAR_SET,
+  fontFamily: DEFAULT_FONT_FAMILY,
+  fontWeight: DEFAULT_FONT_WEIGHT,
+  fontSettings: {},
 
   getText: {type: 'accessor', value: x => x.text},
   getPosition: {type: 'accessor', value: x => x.position},
@@ -56,12 +75,16 @@ const defaultProps = {
 };
 
 export default class TextLayer extends CompositeLayer {
-  updateState({props, oldProps, changeFlags}) {
-    const fontChanged =
-      oldProps.fontFamily !== props.fontFamily || oldProps.characterSet !== props.characterSet;
+  initializeState() {
+    this.state = {
+      fontAtlasManager: new FontAtlasManager(this.context.gl)
+    };
+  }
 
+  updateState({props, oldProps, changeFlags}) {
+    const fontChanged = this.fontChanged(oldProps, props);
     if (fontChanged) {
-      this.updateFontAtlas(props.fontFamily, props.characterSet);
+      this.updateFontAtlas({oldProps, props});
     }
 
     if (
@@ -74,28 +97,65 @@ export default class TextLayer extends CompositeLayer {
     }
   }
 
-  updateFontAtlas(fontFamily, characterSet) {
-    const {gl} = this.context;
-    const {scale, mapping, texture} = makeFontAtlas(gl, {fontFamily, characterSet});
+  updateFontAtlas({oldProps, props}) {
+    const {characterSet, fontSettings, fontFamily, fontWeight} = props;
+
+    // generate test characterSet
+    const fontAtlasManager = this.state.fontAtlasManager;
+    fontAtlasManager.setProps(
+      Object.assign({}, DEFAULT_FONT_SETTINGS, fontSettings, {
+        characterSet,
+        fontFamily,
+        fontWeight
+      })
+    );
+
+    const {scale, texture, mapping} = fontAtlasManager;
+
     this.setState({
       scale,
       iconAtlas: texture,
       iconMapping: mapping
     });
+
+    this.setNeedsRedraw(true);
+  }
+
+  fontChanged(oldProps, props) {
+    if (
+      oldProps.fontFamily !== props.fontFamily ||
+      oldProps.characterSet !== props.characterSet ||
+      oldProps.fontWeight !== props.fontWeight
+    ) {
+      return true;
+    }
+
+    if (oldProps.fontSettings === props.fontSettings) {
+      return false;
+    }
+
+    const oldFontSettings = oldProps.fontSettings || {};
+    const fontSettings = props.fontSettings || {};
+
+    return FONT_SETTINGS_PROPS.some(prop => oldFontSettings[prop] !== fontSettings[prop]);
   }
 
   getPickingInfo({info}) {
+    // because `TextLayer` assign the same pickingInfoIndex for one text label,
+    // here info.index refers the index of text label in props.data
     return Object.assign(info, {
       // override object with original data
-      object: info.object && info.object.object
+      object: info.index >= 0 ? this.props.data[info.index] : null
     });
   }
 
+  /* eslint-disable no-loop-func */
   transformStringToLetters() {
     const {data, getText} = this.props;
     const {iconMapping} = this.state;
 
     const transformedData = [];
+    let objectIndex = 0;
     for (const val of data) {
       const text = getText(val);
       if (text) {
@@ -104,7 +164,16 @@ export default class TextLayer extends CompositeLayer {
         let offsetLeft = 0;
 
         letters.forEach((letter, i) => {
-          const datum = {text: letter, index: i, offsets, len: text.length, object: val};
+          const datum = {
+            text: letter,
+            index: i,
+            offsets,
+            len: text.length,
+            // reference of original object and object index
+            object: val,
+            objectIndex
+          };
+
           const frame = iconMapping[letter];
           if (frame) {
             offsetLeft += frame.width;
@@ -116,10 +185,13 @@ export default class TextLayer extends CompositeLayer {
           transformedData.push(datum);
         });
       }
+
+      objectIndex++;
     }
 
     this.setState({data: transformedData});
   }
+  /* eslint-enable no-loop-func */
 
   getLetterOffset(datum) {
     return datum.offsets[datum.index];
@@ -172,49 +244,58 @@ export default class TextLayer extends CompositeLayer {
       getAlignmentBaseline,
       getPixelOffset,
       fp64,
+      sdf,
       sizeScale,
       transitions,
       updateTriggers
     } = this.props;
 
-    return [
-      new MultiIconLayer(
-        this.getSubLayerProps({
-          id: 'text-multi-icon-layer',
-          data,
-          iconAtlas,
-          iconMapping,
-          getIcon: d => d.text,
-          getPosition: d => getPosition(d.object),
-          getShiftInQueue: d => this.getLetterOffset(d),
-          getLengthOfQueue: d => this.getTextLength(d),
-          getColor: this._getAccessor(getColor),
-          getSize: this._getAccessor(getSize),
-          getAngle: this._getAccessor(getAngle),
-          getAnchorX: this.getAnchorXFromTextAnchor(getTextAnchor),
-          getAnchorY: this.getAnchorYFromAlignmentBaseline(getAlignmentBaseline),
-          getPixelOffset: this._getAccessor(getPixelOffset),
-          fp64,
-          sizeScale: sizeScale * scale,
-          transitions: transitions && {
-            getPosition: transitions.getPosition,
-            getAngle: transitions.getAngle,
-            getColor: transitions.getColor,
-            getSize: transitions.getSize,
-            getPixelOffset: updateTriggers.getPixelOffset
-          },
-          updateTriggers: {
-            getPosition: updateTriggers.getPosition,
-            getAngle: updateTriggers.getAngle,
-            getColor: updateTriggers.getColor,
-            getSize: updateTriggers.getSize,
-            getPixelOffset: updateTriggers.getPixelOffset,
-            getAnchorX: updateTriggers.getTextAnchor,
-            getAnchorY: updateTriggers.getAlignmentBaseline
-          }
-        })
-      )
-    ];
+    const SubLayerClass = this.getSubLayerClass('characters', MultiIconLayer);
+
+    return new SubLayerClass(
+      {
+        sdf,
+        iconAtlas,
+        iconMapping,
+
+        getPosition: d => getPosition(d.object),
+        getColor: this._getAccessor(getColor),
+        getSize: this._getAccessor(getSize),
+        getAngle: this._getAccessor(getAngle),
+        getAnchorX: this.getAnchorXFromTextAnchor(getTextAnchor),
+        getAnchorY: this.getAnchorYFromAlignmentBaseline(getAlignmentBaseline),
+        getPixelOffset: this._getAccessor(getPixelOffset),
+        fp64,
+        sizeScale: sizeScale * scale,
+
+        transitions: transitions && {
+          getPosition: transitions.getPosition,
+          getAngle: transitions.getAngle,
+          getColor: transitions.getColor,
+          getSize: transitions.getSize,
+          getPixelOffset: updateTriggers.getPixelOffset
+        }
+      },
+      this.getSubLayerProps({
+        id: 'characters',
+        updateTriggers: {
+          getPosition: updateTriggers.getPosition,
+          getAngle: updateTriggers.getAngle,
+          getColor: updateTriggers.getColor,
+          getSize: updateTriggers.getSize,
+          getPixelOffset: updateTriggers.getPixelOffset,
+          getAnchorX: updateTriggers.getTextAnchor,
+          getAnchorY: updateTriggers.getAlignmentBaseline
+        }
+      }),
+      {
+        data,
+
+        getIcon: d => d.text,
+        getShiftInQueue: d => this.getLetterOffset(d),
+        getLengthOfQueue: d => this.getTextLength(d)
+      }
+    );
   }
 }
 

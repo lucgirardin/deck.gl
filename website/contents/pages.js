@@ -383,6 +383,10 @@ export const docPages = generatePath([
             content: getDocUrl('layers/arc-layer.md')
           },
           {
+            name: 'BitmapLayer',
+            content: getDocUrl('layers/bitmap-layer.md')
+          },
+          {
             name: 'ContourLayer',
             content: getDocUrl('layers/contour-layer.md')
           },
@@ -427,6 +431,10 @@ export const docPages = generatePath([
             content: getDocUrl('layers/polygon-layer.md')
           },
           {
+            name: 'S2Layer',
+            content: getDocUrl('layers/s2-layer.md')
+          },
+          {
             name: 'ScatterplotLayer',
             content: getDocUrl('layers/scatterplot-layer.md')
           },
@@ -437,6 +445,14 @@ export const docPages = generatePath([
           {
             name: 'TextLayer',
             content: getDocUrl('layers/text-layer.md')
+          },
+          {
+            name: 'TileLayer',
+            content: getDocUrl('layers/tile-layer.md')
+          },
+          {
+            name: 'TripsLayer',
+            content: getDocUrl('layers/trips-layer.md')
           }
         ]
       },
@@ -578,12 +594,8 @@ export const docPages = generatePath([
         content: getDocUrl('api-reference/test-utils/test-layer.md')
       },
       {
-        name: 'SceneRenderer',
-        content: getDocUrl('api-reference/test-utils/scene-renderer.md')
-      },
-      {
-        name: 'RenderTest',
-        content: getDocUrl('api-reference/test-utils/render-test.md')
+        name: 'SnapshotTestRunner',
+        content: getDocUrl('api-reference/test-utils/snapshot-test-runner.md')
       }
     ]
   }

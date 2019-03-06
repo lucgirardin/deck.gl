@@ -7,7 +7,8 @@ export function createProps() {
   const component = this; // eslint-disable-line
 
   // Get default prop object (a prototype chain for now)
-  const propsPrototype = getPropsPrototypeAndTypes(component.constructor).defaultProps;
+  const propTypeDefs = getPropsPrototypeAndTypes(component.constructor);
+  const propsPrototype = propTypeDefs.defaultProps;
 
   // Create a new prop object with default props object in prototype chain
   const propsInstance = Object.create(propsPrototype, {
@@ -35,6 +36,12 @@ export function createProps() {
     Object.assign(propsInstance, arguments[i]);
   }
 
+  const {layerName} = component.constructor;
+  const {deprecatedProps} = propTypeDefs;
+  checkDeprecatedProps(layerName, propsInstance, deprecatedProps);
+  checkDeprecatedProps(layerName, propsInstance.updateTriggers, deprecatedProps);
+  checkDeprecatedProps(layerName, propsInstance.transitions, deprecatedProps);
+
   // SEER: Apply any overrides from the seer debug extension if it is active
   applyPropOverrides(propsInstance);
 
@@ -44,6 +51,28 @@ export function createProps() {
   return propsInstance;
 }
 
+/* eslint-disable max-depth */
+function checkDeprecatedProps(layerName, propsInstance, deprecatedProps) {
+  if (!propsInstance) {
+    return;
+  }
+
+  for (const name in deprecatedProps) {
+    if (hasOwnProperty(propsInstance, name)) {
+      const nameStr = `${layerName || 'Layer'}: ${name}`;
+
+      for (const newPropName of deprecatedProps[name]) {
+        if (!hasOwnProperty(propsInstance, newPropName)) {
+          propsInstance[newPropName] = propsInstance[name];
+        }
+      }
+
+      log.deprecated(nameStr, deprecatedProps[name].join('/'))();
+    }
+  }
+}
+/* eslint-enable max-depth */
+
 // Return precalculated defaultProps and propType objects if available
 // build them if needed
 function getPropsPrototypeAndTypes(componentClass) {
@@ -51,7 +80,8 @@ function getPropsPrototypeAndTypes(componentClass) {
   if (props) {
     return {
       defaultProps: props,
-      propTypes: getOwnProperty(componentClass, '_propTypes')
+      propTypes: getOwnProperty(componentClass, '_propTypes'),
+      deprecatedProps: getOwnProperty(componentClass, '_deprecatedProps')
     };
   }
 
@@ -90,11 +120,19 @@ function createPropsPrototypeAndTypes(componentClass) {
     componentClass
   );
 
+  // Create a map for prop whose default value is a callback
+  const deprecatedProps = Object.assign(
+    {},
+    parentPropDefs && parentPropDefs.deprecatedProps,
+    componentPropDefs.deprecatedProps
+  );
+
   // Store the precalculated props
   componentClass._mergedDefaultProps = defaultProps;
   componentClass._propTypes = propTypes;
+  componentClass._deprecatedProps = deprecatedProps;
 
-  return {propTypes, defaultProps};
+  return {propTypes, defaultProps, deprecatedProps};
 }
 
 // Builds a pre-merged default props object that component props can inherit from
@@ -201,9 +239,13 @@ function getDescriptorForAsyncProp(name) {
 
 // HELPER METHODS
 
+function hasOwnProperty(object, prop) {
+  return Object.prototype.hasOwnProperty.call(object, prop);
+}
+
 // Constructors have their super class constructors as prototypes
 function getOwnProperty(object, prop) {
-  return Object.prototype.hasOwnProperty.call(object, prop) && object[prop];
+  return hasOwnProperty(object, prop) && object[prop];
 }
 
 function getComponentName(componentClass) {

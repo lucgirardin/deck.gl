@@ -21,7 +21,7 @@
 import test from 'tape-catch';
 import {Layer, AttributeManager, COORDINATE_SYSTEM, MapView, OrbitView} from 'deck.gl';
 import {testInitializeLayer} from '@deck.gl/test-utils';
-import {makeSpy} from 'probe.gl/test-utils';
+import {makeSpy} from '@probe.gl/test-utils';
 import {equals, Matrix4} from 'math.gl';
 
 const dataVariants = [{data: ['a', 'b', 'c'], size: 3}];
@@ -99,6 +99,17 @@ test('Layer#constructor', t => {
     t.equal(layer.id, expectedId, 'Layer id set correctly');
     t.ok(layer.props, 'Layer props not null');
   }
+  t.end();
+});
+
+test('Layer#clone', t => {
+  const layer = new SubLayer({id: 'test-layer', data: [0, 1]});
+  const newLayer = layer.clone({pickable: true});
+
+  t.is(newLayer.constructor.name, 'SubLayer', 'cloned layer has correct type');
+  t.is(newLayer.props.id, 'test-layer', 'cloned layer has correct id');
+  t.deepEquals(newLayer.props.data, [0, 1], 'cloned layer has correct data');
+
   t.end();
 });
 

@@ -2,7 +2,8 @@ import React, {Component} from 'react';
 import {render} from 'react-dom';
 import {COORDINATE_SYSTEM} from 'deck.gl';
 import DeckGL, {OrbitView} from 'deck.gl';
-import PolygonLayerWithFilter from './polygon-layer';
+// import PolygonLayerWithFilter from './polygon-layer';
+import {SolidPolygonLayer} from '@deck.gl/layers';
 
 import SAMPLE_TREEMAP from './sample-treemap.json';
 
@@ -32,7 +33,7 @@ class Root extends Component {
         views={[new OrbitView()]}
         initialViewState={INITIAL_VIEW_STATE}
         layers={[
-          new PolygonLayerWithFilter({
+          new SolidPolygonLayer({
             coordinateSystem: COORDINATE_SYSTEM.IDENTITY,
             pickable: true,
             autoHighlight: true,

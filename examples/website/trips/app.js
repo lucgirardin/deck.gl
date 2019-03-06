@@ -2,8 +2,7 @@
 import React, {Component} from 'react';
 import {render} from 'react-dom';
 import {StaticMap} from 'react-map-gl';
-import DeckGL, {PolygonLayer} from 'deck.gl';
-import {TripsLayer} from '@deck.gl/experimental-layers';
+import DeckGL, {PolygonLayer, TripsLayer} from 'deck.gl';
 
 // Set your mapbox token here
 const MAPBOX_TOKEN = process.env.MapboxAccessToken; // eslint-disable-line
@@ -14,15 +13,6 @@ const DATA_URL = {
     'https://raw.githubusercontent.com/uber-common/deck.gl-data/master/examples/trips/buildings.json', // eslint-disable-line
   TRIPS:
     'https://raw.githubusercontent.com/uber-common/deck.gl-data/master/examples/trips/trips.json' // eslint-disable-line
-};
-
-const LIGHT_SETTINGS = {
-  lightsPosition: [-74.05, 40.7, 8000, -73.5, 41, 5000],
-  ambientRatio: 0.05,
-  diffuseRatio: 0.6,
-  specularRatio: 0.8,
-  lightsStrength: [2.0, 0.0, 0.0, 0.0],
-  numberOfLights: 2
 };
 
 export const INITIAL_VIEW_STATE = {
@@ -89,8 +79,7 @@ export class App extends Component {
         opacity: 0.5,
         getPolygon: f => f.polygon,
         getElevation: f => f.height,
-        getFillColor: [74, 80, 87],
-        lightSettings: LIGHT_SETTINGS
+        getFillColor: [74, 80, 87]
       })
     ];
   }

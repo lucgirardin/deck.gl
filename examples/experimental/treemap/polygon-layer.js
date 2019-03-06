@@ -1,4 +1,4 @@
-import {_SolidPolygonLayer} from '@deck.gl/layers';
+import {SolidPolygonLayer} from '@deck.gl/layers';
 import dataFilter from './data-filter';
 
 const defaultProps = {
@@ -6,7 +6,7 @@ const defaultProps = {
   filterRange: [0, 2]
 };
 
-export default class PolygonLayerWithFilter extends _SolidPolygonLayer {
+export default class PolygonLayerWithFilter extends SolidPolygonLayer {
   getShaders() {
     const shaderSettings = super.getShaders();
 

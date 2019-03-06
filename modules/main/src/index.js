@@ -52,9 +52,9 @@ export {
   // Shader modules
   project,
   project64,
-  lighting,
   // Internal classes
   LayerManager,
+  DeckRenderer,
   // Logging
   log,
   // Controllers
@@ -65,9 +65,8 @@ export {
   LinearInterpolator,
   FlyToInterpolator,
   // Effects
-  _EffectManager,
-  _Effect,
-  _ReflectionEffect
+  Effect,
+  LightingEffect
 } from '@deck.gl/core';
 
 // EXPERIMENTAL CORE LIB CLASSES (May change in minor version bumps, use at your own risk)
@@ -100,31 +99,38 @@ Object.assign(experimental, {
 });
 
 //
-// CORE LAYERS PACKAGE
+// LAYERS PACKAGES
 //
 
 export {
   ArcLayer,
+  BitmapLayer,
   IconLayer,
   LineLayer,
   PointCloudLayer,
   ScatterplotLayer,
-  ScreenGridLayer,
-  GridLayer,
   GridCellLayer,
-  HexagonLayer,
   HexagonCellLayer,
   PathLayer,
   PolygonLayer,
+  SolidPolygonLayer,
   GeoJsonLayer,
   TextLayer
 } from '@deck.gl/layers';
+
+export {ScreenGridLayer, GridLayer, HexagonLayer, ContourLayer} from '@deck.gl/aggregation-layers';
+
+export {GreatCircleLayer, S2Layer, TileLayer, TripsLayer} from '@deck.gl/geo-layers';
+
+export {MeshLayer, ScenegraphLayer} from '@deck.gl/mesh-layers';
 
 //
 // REACT BINDINGS PACKAGE
 //
 
 export {default, DeckGL} from '@deck.gl/react';
+
+export {AmbientLight, PointLight, DirectionalLight} from 'luma.gl';
 
 //
 // EXPERIMENTAL EXPORTS

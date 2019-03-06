@@ -22,14 +22,19 @@ const {Tesselator} = experimental;
 import {fp64 as fp64Module} from 'luma.gl';
 const {fp64LowPart} = fp64Module;
 
+// colorArray is used to copy over color values if the passed color is an RGB
+// array instead of RGBA
+const colorArray = [0, 0, 0, 255];
+
 // This class is set up to allow querying one attribute at a time
 // the way the AttributeManager expects it
 export default class PathTesselator extends Tesselator {
-  constructor({data, getGeometry, fp64}) {
+  constructor({data, getGeometry, positionFormat, fp64}) {
     super({
       data,
       getGeometry,
       fp64,
+      positionFormat,
       attributes: {
         startPositions: {size: 3},
         endPositions: {size: 3},
@@ -63,10 +68,13 @@ export default class PathTesselator extends Tesselator {
           size: 4,
           getValue: object => {
             const color = accessor(object);
-            if (isNaN(color[3])) {
-              color[3] = 255;
+            if (color.length === 4) {
+              return color;
             }
-            return color;
+            colorArray[0] = color[0];
+            colorArray[1] = color[1];
+            colorArray[2] = color[2];
+            return colorArray;
           }
         });
 
@@ -107,8 +115,9 @@ export default class PathTesselator extends Tesselator {
     let nextPoint;
 
     for (let i = context.vertexStart, ptIndex = 1; ptIndex < numPoints; i++, ptIndex++) {
-      nextPoint = this.getPointOnPath(path, ptIndex + 1);
-      if (!nextPoint) {
+      if (ptIndex + 1 < numPoints) {
+        nextPoint = this.getPointOnPath(path, ptIndex + 1);
+      } else {
         nextPoint = isPathClosed ? this.getPointOnPath(path, 1) : endPoint;
       }
 
@@ -144,10 +153,24 @@ export default class PathTesselator extends Tesselator {
 
   /* Utilities */
   getPathLength(path) {
+    if (Number.isFinite(path[0])) {
+      // flat format
+      return path.length / this.positionSize;
+    }
     return path.length;
   }
 
   getPointOnPath(path, index) {
+    if (Number.isFinite(path[0])) {
+      // flat format
+      const {positionSize} = this;
+      // TODO - avoid creating new arrays when using binary
+      return [
+        path[index * positionSize],
+        path[index * positionSize + 1],
+        positionSize === 3 ? path[index * positionSize + 2] : 0
+      ];
+    }
     return path[index];
   }
 

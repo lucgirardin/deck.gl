@@ -16,7 +16,7 @@ import {
   GeoJsonLayer,
   PointCloudLayer
 } from 'deck.gl';
-import ContourLayer from '@deck.gl/layers/contour-layer/contour-layer';
+import ContourLayer from '@deck.gl/aggregation-layers/contour-layer/contour-layer';
 
 import {colorToRGBArray} from '../../utils/format-utils';
 
@@ -27,12 +27,15 @@ export const ScatterplotLayerDemo = createLayerDemoClass({
   props: {
     pickable: true,
     opacity: 0.8,
+    stroked: true,
     radiusScale: 6,
     radiusMinPixels: 1,
     radiusMaxPixels: 100,
+    lineWidthMinPixels: 1,
     getPosition: d => d.coordinates,
     getRadius: d => Math.sqrt(d.exits),
-    getColor: [255, 140, 0]
+    getFillColor: [255, 140, 0],
+    getLineColor: [0, 0, 0]
   }
 });
 
@@ -191,8 +194,7 @@ export const PointCloudLayerDemo = createLayerDemoClass({
     radiusPixels: 2,
     getPosition: d => d.position,
     getNormal: d => d.normal,
-    getColor: d => d.color,
-    lightSettings: {}
+    getColor: d => d.color
   }
 });
 

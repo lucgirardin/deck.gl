@@ -32,13 +32,20 @@ const TEST_ATTRIBUTES = {
 };
 
 test('AttributeTransitionManager#constructor', t => {
-  const manager = new AttributeTransitionManager(gl, {id: 'attribute-transition'});
+  let manager = new AttributeTransitionManager(gl, {id: 'attribute-transition'});
   t.ok(manager, 'AttributeTransitionManager is constructed');
   t.is(
     Boolean(manager.isSupported),
     isWebGL2(gl),
     'AttributeTransitionManager checks WebGL support'
   );
+
+  manager.finalize();
+  t.pass('AttributeTransitionManager is finalized');
+
+  manager = new AttributeTransitionManager(null, {id: 'attribute-transition'});
+  t.ok(manager, 'AttributeTransitionManager is constructed without GL context');
+  t.notOk(manager.isSupported, 'AttributeTransitionManager checks WebGL support');
 
   manager.finalize();
   t.pass('AttributeTransitionManager is finalized');
@@ -60,17 +67,17 @@ if (isWebGL2(gl)) {
     manager.update({attributes, transitions: {}, numInstances: 4});
     t.notOk(manager.hasAttribute('indices'), 'no transition for indices');
     t.notOk(manager.hasAttribute('instanceSizes'), 'no transition for instanceSizes');
-    t.notOk(manager.hasAttribute('instancePositions'), 'no transition for instanceSizes');
+    t.notOk(manager.hasAttribute('instancePositions'), 'no transition for instancePositions');
     t.notOk(manager.transform, 'transform is not constructed');
 
-    manager.update({attributes, transitions: {getSize: 1000, getElevation: 1000}, numInstances: 4});
+    manager.update({attributes, transitions: {getSize: 1000, getElevation: 1000}, numInstances: 0});
     t.notOk(manager.hasAttribute('indices'), 'no transition for indices');
     t.ok(manager.hasAttribute('instanceSizes'), 'added transition for instanceSizes');
     t.ok(manager.hasAttribute('instancePositions'), 'added transition for instancePositions');
     t.ok(manager.transform, 'a new transform is constructed');
 
     const sizeTransition = manager.attributeTransitions.instanceSizes;
-    t.is(sizeTransition.buffer.getElementCount(), 4, 'buffer has correct size');
+    t.is(sizeTransition.buffer.getElementCount(), 1, 'buffer has correct size');
 
     let lastTransform = manager.transform;
     delete attributes.instancePositions;
@@ -83,6 +90,7 @@ if (isWebGL2(gl)) {
       'a new transform is constructed'
     );
     t.notOk(lastTransform.model.program._handle, 'last transform is deleted');
+    t.is(sizeTransition.buffer.getElementCount(), 4, 'buffer has correct size');
 
     attributes.instanceSizes.update({value: new Float32Array(5).fill(1)});
     manager.update({attributes, transitions: {getSize: 1000}, numInstances: 5});

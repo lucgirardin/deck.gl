@@ -21,6 +21,11 @@
 import IconLayer from '../../icon-layer/icon-layer';
 
 import vs from './multi-icon-layer-vertex.glsl';
+import fs from './multi-icon-layer-fragment.glsl';
+
+// TODO expose as layer properties
+const DEFAULT_GAMMA = 0.2;
+const DEFAULT_BUFFER = 192.0 / 256;
 
 const defaultProps = {
   getShiftInQueue: {type: 'accessor', value: x => x.shift || 0},
@@ -29,13 +34,17 @@ const defaultProps = {
   getAnchorX: {type: 'accessor', value: x => x.anchorX || 0},
   // 1: top, 0: center, -1: bottom
   getAnchorY: {type: 'accessor', value: x => x.anchorY || 0},
-  getPixelOffset: {type: 'accessor', value: [0, 0]}
+  getPixelOffset: {type: 'accessor', value: [0, 0]},
+
+  // object with the same pickingIndex will be picked when any one of them is being picked
+  getPickingIndex: {type: 'accessor', value: x => x.objectIndex}
 };
 
 export default class MultiIconLayer extends IconLayer {
   getShaders() {
     return Object.assign({}, super.getShaders(), {
-      vs
+      vs,
+      fs
     });
   }
 
@@ -64,6 +73,19 @@ export default class MultiIconLayer extends IconLayer {
     }
   }
 
+  draw({uniforms}) {
+    const {sdf} = this.props;
+    super.draw({
+      uniforms: Object.assign({}, uniforms, {
+        // Refer the following doc about gamma and buffer
+        // https://blog.mapbox.com/drawing-text-with-signed-distance-fields-in-mapbox-gl-b0933af6f817
+        buffer: DEFAULT_BUFFER,
+        gamma: DEFAULT_GAMMA,
+        sdf: Boolean(sdf)
+      })
+    });
+  }
+
   calculateInstanceOffsets(attribute) {
     const {
       data,
@@ -84,6 +106,21 @@ export default class MultiIconLayer extends IconLayer {
 
       value[i++] = ((getAnchorX(object) - 1) * len) / 2 + rect.width / 2 + shiftX || 0;
       value[i++] = (rect.height / 2) * getAnchorY(object) || 0;
+    }
+  }
+
+  calculateInstancePickingColors(attribute) {
+    const {data, getPickingIndex} = this.props;
+    const {value} = attribute;
+    let i = 0;
+    const pickingColor = [];
+    for (const point of data) {
+      const index = getPickingIndex(point);
+      this.encodePickingColor(index, pickingColor);
+
+      value[i++] = pickingColor[0];
+      value[i++] = pickingColor[1];
+      value[i++] = pickingColor[2];
     }
   }
 }

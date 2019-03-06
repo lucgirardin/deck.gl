@@ -26,12 +26,16 @@ const App = ({data, viewport}) => {
     data,
     pickable: true,
     opacity: 0.8,
+    stroked: true,
+    filled: true,
     radiusScale: 6,
     radiusMinPixels: 1,
     radiusMaxPixels: 100,
+    lineWidthMinPixels: 1,
     getPosition: d => d.coordinates,
     getRadius: d => Math.sqrt(d.exits),
-    getColor: d => [255, 140, 0],
+    getFillColor: d => [255, 140, 0],
+    getLineColor: d => [0, 0, 0],
     onHover: ({object, x, y}) => {
       const tooltip = `${object.name}\n${object.address}`;
       /* Update tooltip
@@ -56,21 +60,27 @@ Inherits from all [Base Layer](/docs/api-reference/layer.md) properties.
 
 A global radius multiplier for all points.
 
-##### `outline` (Boolean, optional)
-
-* Default: `false`
-
-Only draw outline of points.
-
-##### `strokeWidth` (Number, optional)
+##### `lineWidthScale` (Number, optional)
 
 * Default: `1`
 
-Width of the outline, in pixels. Requires `outline` to be `true`.
+A global line width multiplier for all points.
+
+##### `stroked` (Boolean, optional)
+
+* Default: `false`
+
+Only draw outline of points. It falls back to `outline` if not provided.
+
+##### `filled` (Boolean, optional)
+
+* Default: `true`
+
+Draw the filled area of a point.
 
 ##### `radiusMinPixels` (Number, optional)
 
-* Default: `0`
+* Default: `1`
 
 The minimum radius in pixels.
 
@@ -79,6 +89,19 @@ The minimum radius in pixels.
 * Default: `Number.MAX_SAFE_INTEGER`
 
 The maximum radius in pixels.
+
+##### `lineWidthMinPixels` (Number, optional)
+
+* Default: `1`
+
+The minimum line width in pixels.
+
+##### `lineWidthMaxPixels` (Number, optional)
+
+* Default: `Number.MAX_SAFE_INTEGER`
+
+The maximum line width in pixels.
+
 
 ##### `fp64` (Boolean, optional)
 
@@ -111,6 +134,38 @@ The rgba color of each object, in `r, g, b, [a]`. Each component is in the 0-255
 
 * If an array is provided, it is used as the color for all objects.
 * If a function is provided, it is called on each object to retrieve its color.
+
+It will be overridden by `getLineColor` and `getFillColor` if these new accessors are specified.
+
+##### `getFillColor` (Function|Array, optional) ![transition-enabled](https://img.shields.io/badge/transition-enabled-green.svg?style=flat-square")
+
+* Default: `[0, 0, 0, 255]`
+
+The rgba color of each object, in `r, g, b, [a]`. Each component is in the 0-255 range.
+
+* If an array is provided, it is used as the filled color for all objects.
+* If a function is provided, it is called on each object to retrieve its color.
+* If not provided, it falls back to `getColor`.
+
+##### `getLineColor` (Function|Array, optional) ![transition-enabled](https://img.shields.io/badge/transition-enabled-green.svg?style=flat-square")
+
+* Default: `[0, 0, 0, 255]`
+
+The rgba color of each object, in `r, g, b, [a]`. Each component is in the 0-255 range.
+
+* If an array is provided, it is used as the outline color for all objects.
+* If a function is provided, it is called on each object to retrieve its color.
+* If not provided, it falls back to `getColor`.
+
+##### `getLineWidth` (Function|Array, optional) ![transition-enabled](https://img.shields.io/badge/transition-enabled-green.svg?style=flat-square")
+
+* Default: `1`
+
+The width of the outline of each object, in meters.
+
+* If a number is provided, it is used as the outline width for all objects.
+* If a function is provided, it is called on each object to retrieve its outline width.
+* If not provided, it falls back to `strokeWidth`.
 
 ## Source
 

@@ -21,8 +21,10 @@
 import LayerManager from './layer-manager';
 import ViewManager from './view-manager';
 import MapView from '../views/map-view';
-import EffectManager from '../experimental/lib/effect-manager';
-import Effect from '../experimental/lib/effect';
+import EffectManager from './effect-manager';
+import Effect from './effect';
+import DeckRenderer from './deck-renderer';
+import DeckPicker from './deck-picker';
 import log from '../utils/log';
 
 import GL from '@luma.gl/constants';
@@ -31,21 +33,12 @@ import {Stats} from 'probe.gl';
 import {EventManager} from 'mjolnir.js';
 
 import assert from '../utils/assert';
-import VENDOR_PREFIX from '../utils/css-vendor-prefix';
 import {EVENTS} from './constants';
 /* global document */
 
 function noop() {}
 
-const PREFIX = VENDOR_PREFIX === '-webkit-' ? VENDOR_PREFIX : '';
-
-const CURSOR = {
-  GRABBING: `${PREFIX}grabbing`,
-  GRAB: `${PREFIX}grab`,
-  POINTER: 'pointer'
-};
-
-const getCursor = ({isDragging}) => (isDragging ? CURSOR.GRABBING : CURSOR.GRAB);
+const getCursor = ({isDragging}) => (isDragging ? 'grabbing' : 'grab');
 
 function getPropTypes(PropTypes) {
   // Note: Arrays (layers, views, ) can contain falsy values
@@ -114,6 +107,7 @@ const defaultProps = {
   onLayerClick: null,
   onLayerHover: null,
   onLoad: noop,
+  _onMetrics: null,
 
   getCursor,
 
@@ -121,6 +115,7 @@ const defaultProps = {
   drawPickingColors: false
 };
 
+/* eslint-disable max-statements */
 export default class Deck {
   constructor(props) {
     props = Object.assign({}, defaultProps, props);
@@ -132,6 +127,8 @@ export default class Deck {
     this.viewManager = null;
     this.layerManager = null;
     this.effectManager = null;
+    this.deckRenderer = null;
+    this.deckPicker = null;
 
     this.stats = new Stats({id: 'deck.gl'});
 
@@ -183,6 +180,12 @@ export default class Deck {
     if (this.eventManager) {
       this.eventManager.destroy();
     }
+
+    if (!this.props.canvas && !this.props.gl && this.canvas) {
+      // remove internally created canvas
+      this.canvas.parentElement.removeChild(this.canvas);
+      this.canvas = null;
+    }
   }
 
   setProps(props) {
@@ -215,16 +218,27 @@ export default class Deck {
       this.layerManager.setProps(newProps);
     }
 
+    if (this.effectManager) {
+      this.effectManager.setProps(newProps);
+    }
+
     // Update animation loop
     if (this.animationLoop) {
       this.animationLoop.setProps(newProps);
+    }
+
+    if (this.deckRenderer) {
+      this.deckRenderer.setProps(newProps);
+    }
+
+    if (this.deckPicker) {
+      this.deckPicker.setProps(newProps);
     }
 
     this.stats.timeEnd('deck.setProps');
   }
 
   // Public API
-
   // Check if a redraw is needed
   // Returns `false` or a string summarizing the redraw reason
   needsRedraw({clearRedrawFlags = true} = {}) {
@@ -240,7 +254,15 @@ export default class Deck {
 
     const viewManagerNeedsRedraw = this.viewManager.needsRedraw({clearRedrawFlags});
     const layerManagerNeedsRedraw = this.layerManager.needsRedraw({clearRedrawFlags});
-    redraw = redraw || viewManagerNeedsRedraw || layerManagerNeedsRedraw;
+    const effectManagerNeedsRedraw = this.effectManager.needsRedraw({clearRedrawFlags});
+    const deckRendererNeedsRedraw = this.deckRenderer.needsRedraw({clearRedrawFlags});
+
+    redraw =
+      redraw ||
+      viewManagerNeedsRedraw ||
+      layerManagerNeedsRedraw ||
+      effectManagerNeedsRedraw ||
+      deckRendererNeedsRedraw;
     return redraw;
   }
 
@@ -255,12 +277,15 @@ export default class Deck {
 
   pickObject({x, y, radius = 0, layerIds = null}) {
     this.stats.timeStart('deck.pickObject');
-    const selectedInfos = this.layerManager.pickObject({
+    const layers = this.layerManager.getLayers({layerIds});
+    const activateViewport = this.layerManager.activateViewport;
+    const selectedInfos = this.deckPicker.pickObject({
       x,
       y,
       radius,
-      layerIds,
+      layers,
       viewports: this.getViewports({x, y}),
+      activateViewport,
       mode: 'query',
       depth: 1
     });
@@ -270,12 +295,15 @@ export default class Deck {
 
   pickMultipleObjects({x, y, radius = 0, layerIds = null, depth = 10}) {
     this.stats.timeStart('deck.pickMultipleObjects');
-    const selectedInfos = this.layerManager.pickObject({
+    const layers = this.layerManager.getLayers({layerIds});
+    const activateViewport = this.layerManager.activateViewport;
+    const selectedInfos = this.deckPicker.pickObject({
       x,
       y,
       radius,
-      layerIds,
+      layers,
       viewports: this.getViewports({x, y}),
+      activateViewport,
       mode: 'query',
       depth
     });
@@ -285,13 +313,16 @@ export default class Deck {
 
   pickObjects({x, y, width = 1, height = 1, layerIds = null}) {
     this.stats.timeStart('deck.pickObjects');
-    const infos = this.layerManager.pickObjects({
+    const layers = this.layerManager.getLayers({layerIds});
+    const activateViewport = this.layerManager.activateViewport;
+    const infos = this.deckPicker.pickObjects({
       x,
       y,
       width,
       height,
-      layerIds,
-      viewports: this.getViewports({x, y, width, height})
+      layers,
+      viewports: this.getViewports({x, y, width, height}),
+      activateViewport
     });
     this.stats.timeEnd('deck.pickObjects');
     return infos;
@@ -413,11 +444,15 @@ export default class Deck {
     }
 
     const radius = this.props.pickingRadius;
-    const selectedInfos = this.layerManager.pickObject({
+    const layers = this.layerManager.getLayers();
+    const activateViewport = this.layerManager.activateViewport;
+    const selectedInfos = this.deckPicker.pickObject({
       x: pos.x,
       y: pos.y,
       radius,
+      layers,
       viewports: this.getViewports(pos),
+      activateViewport,
       mode: options.mode,
       depth: 1,
       event: options.event
@@ -496,11 +531,11 @@ export default class Deck {
       viewport
     });
 
-    this.effectManager = new EffectManager({gl, layerManager: this.layerManager});
+    this.effectManager = new EffectManager();
 
-    for (const effect of this.props.effects) {
-      this.effectManager.addEffect(effect);
-    }
+    this.deckRenderer = new DeckRenderer(gl);
+
+    this.deckPicker = new DeckPicker(gl);
 
     this.setProps(this.props);
 
@@ -515,13 +550,18 @@ export default class Deck {
 
     this.props.onBeforeRender({gl});
 
-    this.layerManager.drawLayers({
-      pass: 'screen',
+    const layers = this.layerManager.getLayers();
+    const activateViewport = this.layerManager.activateViewport;
+
+    this.deckRenderer.renderLayers({
+      layers,
       viewports: this.viewManager.getViewports(),
+      activateViewport,
       views: this.viewManager.getViews(),
+      pass: 'screen',
       redrawReason,
-      drawPickingColors: this.props.drawPickingColors, // Debug picking, helps in framebuffered layers
-      customRender: Boolean(this.props._customRender)
+      customRender: Boolean(this.props._customRender),
+      effects: this.effectManager.getEffects()
     });
 
     this.props.onAfterRender({gl});
@@ -539,6 +579,14 @@ export default class Deck {
       const table = this.stats.getStatsTable();
       this.stats.reset();
       log.table(3, table)();
+
+      // Experimental: report metrics
+      if (this.props._onMetrics) {
+        for (const key in table) {
+          table[key] = table[key].total;
+        }
+        this.props._onMetrics(table);
+      }
     }
 
     this._updateCanvasSize();
@@ -560,7 +608,7 @@ export default class Deck {
       return;
     }
 
-    this.stats.bump('render-fps');
+    this.stats.bump('redraw');
     if (this.props._customRender) {
       this.props._customRender();
     } else {
@@ -607,9 +655,11 @@ export default class Deck {
     }
 
     // Reuse last picked object
-    const info = this.layerManager.getLastPickedObject({
+    const layers = this.layerManager.getLayers();
+    const info = this.deckPicker.getLastPickedObject({
       x: pos.x,
       y: pos.y,
+      layers,
       viewports: this.getViewports(pos)
     });
 
@@ -640,10 +690,14 @@ export default class Deck {
   }
 
   _onPointerLeave(event) {
-    this.layerManager.pickObject({
+    const layers = this.layerManager.getLayers();
+    const activateViewport = this.layerManager.activateViewport;
+    this.deckPicker.pickObject({
       x: -1,
       y: -1,
+      layers,
       viewports: [],
+      activateViewport,
       radius: 1,
       mode: 'hover'
     });

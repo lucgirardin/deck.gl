@@ -41,6 +41,8 @@ const LOG_PRIORITY_UPDATE = 1;
 
 const EMPTY_ARRAY = Object.freeze([]);
 
+let pickingColorCache = new Uint8ClampedArray(0);
+
 const defaultProps = {
   // data: Special handling for null, see below
   data: {type: 'data', value: EMPTY_ARRAY, async: true},
@@ -244,16 +246,16 @@ export default class Layer extends Component {
   }
 
   // Event handling
-  onHover(info) {
+  onHover(info, pickingEvent) {
     if (this.props.onHover) {
-      return this.props.onHover(info, this.context.pickingEvent);
+      return this.props.onHover(info, pickingEvent);
     }
     return false;
   }
 
-  onClick(info) {
+  onClick(info, pickingEvent) {
     if (this.props.onClick) {
-      return this.props.onClick(info, this.context.pickingEvent);
+      return this.props.onClick(info, pickingEvent);
     }
     return false;
   }
@@ -267,9 +269,12 @@ export default class Layer extends Component {
 
   // Returns the picking color that doesn't match any subfeature
   // Use if some graphics do not belong to any pickable subfeature
-  encodePickingColor(i) {
-    assert((((i + 1) >> 24) & 255) === 0, 'index out of picking color range');
-    return [(i + 1) & 255, ((i + 1) >> 8) & 255, (((i + 1) >> 8) >> 8) & 255];
+  encodePickingColor(i, target = []) {
+    assert(i < 16777215, 'index out of picking color range');
+    target[0] = (i + 1) & 255;
+    target[1] = ((i + 1) >> 8) & 255;
+    target[2] = (((i + 1) >> 8) >> 8) & 255;
+    return target;
   }
 
   // Returns the index corresponding to a picking color that doesn't match any subfeature
@@ -385,10 +390,13 @@ export default class Layer extends Component {
       ignoreUnknownAttributes: true
     });
 
-    const model = this.getSingleModel();
-    if (model) {
+    const models = this.getModels();
+
+    if (models.length > 0) {
       const changedAttributes = attributeManager.getChangedAttributes({clearChangedFlags: true});
-      model.setAttributes(changedAttributes);
+      for (let i = 0, len = models.length; i < len; ++i) {
+        this._setModelAttributes(models[i], changedAttributes);
+      }
     }
   }
 
@@ -402,12 +410,54 @@ export default class Layer extends Component {
 
   calculateInstancePickingColors(attribute, {numInstances}) {
     const {value, size} = attribute;
-    // add 1 to index to seperate from no selection
-    for (let i = 0; i < numInstances; i++) {
-      const pickingColor = this.encodePickingColor(i);
-      value[i * size + 0] = pickingColor[0];
-      value[i * size + 1] = pickingColor[1];
-      value[i * size + 2] = pickingColor[2];
+
+    if (value[0] === 1) {
+      // This can happen when data has changed, but the attribute value typed array
+      // has sufficient size and does not need to be re-allocated.
+      // This attribute is already populated, we do not have to recalculate it
+      return;
+    }
+
+    // calculateInstancePickingColors always generates the same sequence.
+    // pickingColorCache saves the largest generated sequence for reuse
+    const cacheSize = pickingColorCache.length / size;
+
+    if (cacheSize < numInstances) {
+      // If the attribute is larger than the cache, resize the cache and populate the missing chunk
+      const newPickingColorCache = new Uint8ClampedArray(numInstances * size);
+      newPickingColorCache.set(pickingColorCache);
+      const pickingColor = [];
+
+      for (let i = cacheSize; i < numInstances; i++) {
+        this.encodePickingColor(i, pickingColor);
+        newPickingColorCache[i * size + 0] = pickingColor[0];
+        newPickingColorCache[i * size + 1] = pickingColor[1];
+        newPickingColorCache[i * size + 2] = pickingColor[2];
+      }
+
+      pickingColorCache = newPickingColorCache;
+    }
+
+    // Copy the last calculated picking color sequence into the attribute
+    value.set(
+      numInstances < cacheSize
+        ? pickingColorCache.subarray(0, numInstances * size)
+        : pickingColorCache
+    );
+  }
+
+  _setModelAttributes(model, changedAttributes) {
+    if (model.userData.excludeAttributes) {
+      const filteredAttributes = {};
+      const excludeAttributes = model.userData.excludeAttributes;
+      for (const attributeName in changedAttributes) {
+        if (!excludeAttributes[attributeName]) {
+          filteredAttributes[attributeName] = changedAttributes[attributeName];
+        }
+      }
+      model.setAttributes(filteredAttributes);
+    } else {
+      model.setAttributes(changedAttributes);
     }
   }
 
@@ -474,14 +524,14 @@ export default class Layer extends Component {
   getNumInstances(props) {
     props = props || this.props;
 
-    // First check if the layer has set its own value
-    if (this.state && this.state.numInstances !== undefined) {
-      return this.state.numInstances;
-    }
-
-    // Check if app has provided an explicit value
+    // First Check if app has provided an explicit value
     if (props.numInstances !== undefined) {
       return props.numInstances;
+    }
+
+    // Second check if the layer has set its own value
+    if (this.state && this.state.numInstances !== undefined) {
+      return this.state.numInstances;
     }
 
     // Use container library to get a count for any ES6 container or object
@@ -495,8 +545,6 @@ export default class Layer extends Component {
   // Called by layer manager when a new layer is found
   /* eslint-disable max-statements */
   _initialize() {
-    assert(this.context.gl);
-
     this._initState();
 
     // Call subclass lifecycle methods
@@ -537,8 +585,16 @@ export default class Layer extends Component {
   _updateState() {
     const updateParams = this._getUpdateParams();
 
-    // Call subclass lifecycle methods
-    this.updateState(updateParams);
+    // Safely call subclass lifecycle methods
+    if (this.context.gl) {
+      this.updateState(updateParams);
+    } else {
+      try {
+        this.updateState(updateParams);
+      } catch (error) {
+        // ignore error if gl context is missing
+      }
+    }
     // End subclass lifecycle methods
 
     if (this.isComposite) {

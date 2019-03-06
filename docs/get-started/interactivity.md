@@ -54,7 +54,7 @@ const deck = new Deck({
       ],
       getPosition: d => d.position,
       getRadius: 1000,
-      getColor: [255, 255, 0],
+      getFillColor: [255, 255, 0],
       // Enable picking
       pickable: true,
       // Update tooltip
@@ -101,7 +101,7 @@ class App extends React.Component {
         ],
         getPosition: d => d.position,
         getRadius: 1000,
-        getColor: [255, 255, 0],
+        getFillColor: [255, 255, 0],
         // Enable picking
         pickable: true,
         // Update app state
@@ -126,7 +126,7 @@ class App extends React.Component {
 
 ## Calling the Picking Engine Directly
 
-The picking engine is exposed through the [`DeckGL.pickObject`](/docs/api-reference/react/deckgl.md) and [`DeckGL.pickObjects`](/docs/api-reference/react/deckgl.md) methods. These methods allow you to query what layers and objects within those layers are under a specific point or within a specified rectangle. They return `Picking Info` objects as described below.
+The picking engine is exposed through the [`Deck.pickObject`](/docs/api-reference/deck.md) and [`Deck.pickObjects`](/docs/api-reference/deck.md) methods. These methods allow you to query what layers and objects within those layers are under a specific point or within a specified rectangle. They return `Picking Info` objects as described below.
 
 `pickObject` allows an application to define its own event handling. When it comes to how to actually do event handling in a browser, there are many options. In a React application, perhaps the simplest is to just use React's "synthetic" event handling together with `pickObject`:
 

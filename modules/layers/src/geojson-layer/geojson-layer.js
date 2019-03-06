@@ -21,6 +21,7 @@
 import {CompositeLayer} from '@deck.gl/core';
 import ScatterplotLayer from '../scatterplot-layer/scatterplot-layer';
 import PathLayer from '../path-layer/path-layer';
+import {PhongMaterial} from '@luma.gl/core';
 // Use primitive layer to avoid "Composite Composite" layers for now
 import SolidPolygonLayer from '../solid-polygon-layer/solid-polygon-layer';
 
@@ -67,15 +68,8 @@ const defaultProps = {
   getLineDashArray: {type: 'accessor', value: [0, 0]},
   // Polygon extrusion accessor
   getElevation: {type: 'accessor', value: 1000},
-
-  subLayers: {
-    PointLayer: ScatterplotLayer,
-    LineLayer: PathLayer,
-    PolygonLayer: SolidPolygonLayer
-  },
-
-  // Optional settings for 'lighting' shader module
-  lightSettings: {}
+  // Optional material for 'lighting' shader module
+  material: new PhongMaterial()
 };
 
 function getCoordinates(f) {
@@ -123,15 +117,7 @@ export default class GeoJsonLayer extends CompositeLayer {
     const {pointFeatures, lineFeatures, polygonFeatures, polygonOutlineFeatures} = features;
 
     // Layer composition props
-    const {
-      stroked,
-      filled,
-      extruded,
-      wireframe,
-      subLayers,
-      lightSettings,
-      transitions
-    } = this.props;
+    const {stroked, filled, extruded, wireframe, material, transitions} = this.props;
 
     // Rendering props underlying layer
     const {
@@ -159,32 +145,22 @@ export default class GeoJsonLayer extends CompositeLayer {
       updateTriggers
     } = this.props;
 
-    const drawPoints = pointFeatures && pointFeatures.length > 0;
-    const drawLines = lineFeatures && lineFeatures.length > 0;
-    const hasPolygonLines = polygonOutlineFeatures && polygonOutlineFeatures.length > 0;
-    const hasPolygon = polygonFeatures && polygonFeatures.length > 0;
+    const PolygonFillLayer = this.getSubLayerClass('polygons-fill', SolidPolygonLayer);
+    const PolygonStrokeLayer = this.getSubLayerClass('polygons-stroke', PathLayer);
+    const LineStringsLayer = this.getSubLayerClass('line-strings', PathLayer);
+    const PointsLayer = this.getSubLayerClass('points', ScatterplotLayer);
 
     // Filled Polygon Layer
     const polygonFillLayer =
-      hasPolygon &&
-      new subLayers.PolygonLayer(
-        this.getSubLayerProps({
-          id: 'polygon-fill',
-          updateTriggers: {
-            getElevation: updateTriggers.getElevation,
-            getFillColor: updateTriggers.getFillColor,
-            getLineColor: updateTriggers.getLineColor
-          }
-        }),
+      this.shouldRenderSubLayer('polygons-fill', polygonFeatures) &&
+      new PolygonFillLayer(
         {
-          data: polygonFeatures,
           fp64,
           extruded,
           elevationScale,
           filled,
           wireframe,
-          lightSettings,
-          getPolygon: getCoordinates,
+          material,
           getElevation: unwrappingAccessor(getElevation),
           getFillColor: unwrappingAccessor(getFillColor),
           getLineColor: unwrappingAccessor(getLineColor),
@@ -195,16 +171,47 @@ export default class GeoJsonLayer extends CompositeLayer {
             getFillColor: transitions.getFillColor,
             getLineColor: transitions.getLineColor
           }
+        },
+        this.getSubLayerProps({
+          id: 'polygons-fill',
+          updateTriggers: {
+            getElevation: updateTriggers.getElevation,
+            getFillColor: updateTriggers.getFillColor,
+            getLineColor: updateTriggers.getLineColor
+          }
+        }),
+        {
+          data: polygonFeatures,
+          getPolygon: getCoordinates
         }
       );
 
     const polygonLineLayer =
       !extruded &&
       stroked &&
-      hasPolygonLines &&
-      new subLayers.LineLayer(
+      this.shouldRenderSubLayer('polygons-stroke', polygonOutlineFeatures) &&
+      new PolygonStrokeLayer(
+        {
+          fp64,
+          widthScale: lineWidthScale,
+          widthMinPixels: lineWidthMinPixels,
+          widthMaxPixels: lineWidthMaxPixels,
+          rounded: lineJointRounded,
+          miterLimit: lineMiterLimit,
+          dashJustified: lineDashJustified,
+
+          getColor: unwrappingAccessor(getLineColor),
+          getWidth: unwrappingAccessor(getLineWidth),
+          getDashArray: unwrappingAccessor(getLineDashArray),
+
+          transitions: transitions && {
+            getPath: transitions.geometry,
+            getColor: transitions.getLineColor,
+            getWidth: transitions.getLineWidth
+          }
+        },
         this.getSubLayerProps({
-          id: 'polygon-outline',
+          id: 'polygons-stroke',
           updateTriggers: {
             getColor: updateTriggers.getLineColor,
             getWidth: updateTriggers.getLineWidth,
@@ -213,7 +220,14 @@ export default class GeoJsonLayer extends CompositeLayer {
         }),
         {
           data: polygonOutlineFeatures,
+          getPath: getCoordinates
+        }
+      );
 
+    const pathLayer =
+      this.shouldRenderSubLayer('linestrings', lineFeatures) &&
+      new LineStringsLayer(
+        {
           fp64,
           widthScale: lineWidthScale,
           widthMinPixels: lineWidthMinPixels,
@@ -222,7 +236,6 @@ export default class GeoJsonLayer extends CompositeLayer {
           miterLimit: lineMiterLimit,
           dashJustified: lineDashJustified,
 
-          getPath: getCoordinates,
           getColor: unwrappingAccessor(getLineColor),
           getWidth: unwrappingAccessor(getLineWidth),
           getDashArray: unwrappingAccessor(getLineDashArray),
@@ -232,14 +245,9 @@ export default class GeoJsonLayer extends CompositeLayer {
             getColor: transitions.getLineColor,
             getWidth: transitions.getLineWidth
           }
-        }
-      );
-
-    const pathLayer =
-      drawLines &&
-      new subLayers.LineLayer(
+        },
         this.getSubLayerProps({
-          id: 'line-paths',
+          id: 'line-strings',
           updateTriggers: {
             getColor: updateTriggers.getLineColor,
             getWidth: updateTriggers.getLineWidth,
@@ -248,55 +256,49 @@ export default class GeoJsonLayer extends CompositeLayer {
         }),
         {
           data: lineFeatures,
-
-          fp64,
-          widthScale: lineWidthScale,
-          widthMinPixels: lineWidthMinPixels,
-          widthMaxPixels: lineWidthMaxPixels,
-          rounded: lineJointRounded,
-          miterLimit: lineMiterLimit,
-          dashJustified: lineDashJustified,
-
-          getPath: getCoordinates,
-          getColor: unwrappingAccessor(getLineColor),
-          getWidth: unwrappingAccessor(getLineWidth),
-          getDashArray: unwrappingAccessor(getLineDashArray),
-
-          transitions: transitions && {
-            getPath: transitions.geometry,
-            getColor: transitions.getLineColor,
-            getWidth: transitions.getLineWidth
-          }
+          getPath: getCoordinates
         }
       );
 
     const pointLayer =
-      drawPoints &&
-      new subLayers.PointLayer(
+      this.shouldRenderSubLayer('points', pointFeatures) &&
+      new PointsLayer(
+        {
+          fp64,
+          stroked,
+          filled,
+          radiusScale: pointRadiusScale,
+          radiusMinPixels: pointRadiusMinPixels,
+          radiusMaxPixels: pointRadiusMaxPixels,
+          lineWidthScale,
+          lineWidthMinPixels,
+          lineWidthMaxPixels,
+
+          getFillColor: unwrappingAccessor(getFillColor),
+          getLineColor: unwrappingAccessor(getLineColor),
+          getRadius: unwrappingAccessor(getRadius),
+          getLineWidth: unwrappingAccessor(getLineWidth),
+
+          transitions: transitions && {
+            getPosition: transitions.geometry,
+            getFillColor: transitions.getFillColor,
+            getLineColor: transitions.getLineColor,
+            getRadius: transitions.getRadius,
+            getLineWidth: transitions.getLineWidth
+          }
+        },
         this.getSubLayerProps({
           id: 'points',
           updateTriggers: {
-            getColor: updateTriggers.getFillColor,
-            getRadius: updateTriggers.getRadius
+            getFillColor: updateTriggers.getFillColor,
+            getLineColor: updateTriggers.getLineColor,
+            getRadius: updateTriggers.getRadius,
+            getLineWidth: updateTriggers.getLineWidth
           }
         }),
         {
           data: pointFeatures,
-
-          fp64,
-          radiusScale: pointRadiusScale,
-          radiusMinPixels: pointRadiusMinPixels,
-          radiusMaxPixels: pointRadiusMaxPixels,
-
-          getPosition: getCoordinates,
-          getColor: unwrappingAccessor(getFillColor),
-          getRadius: unwrappingAccessor(getRadius),
-
-          transitions: transitions && {
-            getPosition: transitions.geometry,
-            getColor: transitions.getFillColor,
-            getRadius: transitions.getRadius
-          }
+          getPosition: getCoordinates
         }
       );
 

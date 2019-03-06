@@ -4,6 +4,8 @@ import {
   ArcLayer,
   LineLayer,
   // PointCloudLayer,
+  BitmapLayer,
+  ContourLayer,
   ScreenGridLayer,
   IconLayer,
   GridCellLayer,
@@ -13,24 +15,15 @@ import {
   GeoJsonLayer,
   PolygonLayer,
   PathLayer,
-  TextLayer
+  TextLayer,
+  experimental
   //  ContourLayer
 } from 'deck.gl';
-
-import ContourLayer from '@deck.gl/layers/contour-layer/contour-layer';
+const {flattenVertices} = experimental;
 
 // Demonstrate immutable support
 import * as dataSamples from '../data-samples';
 import {parseColor, setOpacity} from '../utils/color';
-
-const LIGHT_SETTINGS = {
-  lightsPosition: [-122.45, 37.66, 8000, -122.0, 38.0, 8000],
-  ambientRatio: 0.3,
-  diffuseRatio: 0.6,
-  specularRatio: 0.4,
-  lightsStrength: [1, 0.0, 0.8, 0.0],
-  numberOfLights: 2
-};
 
 const MARKER_SIZE_MAP = {
   small: 200,
@@ -62,6 +55,41 @@ const IconLayerExample = {
     getColor: d => [64, 64, 72],
     getIcon: d => (d.PLACEMENT === 'SW' ? 'marker' : 'marker-warning'),
     getSize: d => (d.RACKS > 2 ? 2 : 1),
+    opacity: 0.8,
+    pickable: true
+  }
+};
+
+const IconLayerAutoPackingExample = {
+  layer: IconLayer,
+  getData: () => dataSamples.points,
+  props: {
+    id: 'icon-layer-auto-packing',
+    sizeScale: 24,
+    getPosition: d => d.COORDINATES,
+    getColor: d => [64, 64, 72],
+    getIcon: d => {
+      if (d.PLACEMENT === 'SW') {
+        return {
+          url: 'data/icon-marker.png',
+          width: 64,
+          height: 64,
+          anchorY: 64,
+          mask: true
+        };
+      }
+      return {
+        id: 'warning',
+        url: 'data/icon-warning.png',
+        width: 128,
+        height: 128,
+        anchorY: 128,
+        mask: false
+      };
+    },
+    getSize: d => {
+      return d.RACKS > 2 ? 2 : 1;
+    },
     opacity: 0.8,
     pickable: true
   }
@@ -99,8 +127,7 @@ const GeoJsonLayerExample = {
     lineWidthScale: 10,
     lineWidthMinPixels: 1,
     pickable: true,
-    fp64: true,
-    lightSettings: LIGHT_SETTINGS
+    fp64: true
   }
 };
 
@@ -114,8 +141,7 @@ const GeoJsonLayerExtrudedExample = {
     getLineColor: f => [200, 0, 80],
     extruded: true,
     wireframe: true,
-    pickable: true,
-    lightSettings: LIGHT_SETTINGS
+    pickable: true
   }
 };
 
@@ -137,13 +163,26 @@ const PolygonLayerExample = {
     getFillColor: f => [200 + Math.random() * 55, 0, 0],
     getLineColor: f => [0, 0, 0, 255],
     getLineDashArray: f => [20, 0],
-    getWidth: f => 20,
+    getLineWidth: f => 20,
     getElevation: f => Math.random() * 1000,
     opacity: 0.8,
     pickable: true,
     lineDashJustified: true,
-    lightSettings: LIGHT_SETTINGS,
     elevationScale: 0.6
+  }
+};
+
+const PolygonLayerBinaryExample = {
+  ...PolygonLayerExample,
+  getData: () =>
+    dataSamples.polygons.map(polygon => {
+      // Convert each polygon from an array of points to an array of numbers
+      return flattenVertices(polygon, {dimensions: 2});
+    }),
+  props: {
+    ...PolygonLayerExample.props,
+    getPolygon: d => d,
+    positionFormat: 'XY'
   }
 };
 
@@ -169,6 +208,20 @@ const PathLayerExample = {
     getDashArray: f => [20, 0],
     widthMinPixels: 1,
     pickable: true
+  }
+};
+
+const PathLayerBinaryExample = {
+  ...PathLayerExample,
+  getData: () =>
+    dataSamples.zigzag.map(({path}) => {
+      // Convert each path from an array of points to an array of numbers
+      return flattenVertices(path, {dimensions: 2});
+    }),
+  props: {
+    ...PathLayerExample.props,
+    getPath: d => d,
+    positionFormat: 'XY'
   }
 };
 
@@ -216,7 +269,8 @@ const ScatterplotLayerExample = {
   props: {
     id: 'scatterplotLayer',
     getPosition: d => d.COORDINATES,
-    getColor: d => [255, 128, 0],
+    getFillColor: d => [255, 128, 0],
+    getLineColor: d => [0, 128, 255],
     getRadius: d => d.SPACES,
     opacity: 1,
     pickable: true,
@@ -236,8 +290,7 @@ const GridCellLayerExample = {
     pickable: true,
     opacity: 1,
     getColor: d => [245, 166, d.value * 255, 255],
-    getElevation: d => d.value * 5000,
-    lightSettings: LIGHT_SETTINGS
+    getElevation: d => d.value * 5000
   }
 };
 
@@ -312,8 +365,7 @@ const GridLayerExample = {
     pickable: true,
     getPosition: d => d.COORDINATES,
     getColorValue,
-    getElevationValue,
-    lightSettings: LIGHT_SETTINGS
+    getElevationValue
   }
 };
 
@@ -328,8 +380,7 @@ const HexagonCellLayerExample = {
     pickable: true,
     opacity: 1,
     getColor: d => [48, 128, d.value * 255, 255],
-    getElevation: d => d.value * 5000,
-    lightSettings: LIGHT_SETTINGS
+    getElevation: d => d.value * 5000
   }
 };
 
@@ -347,8 +398,7 @@ const HexagonLayerExample = {
     coverage: 1,
     getPosition: d => d.COORDINATES,
     getColorValue,
-    getElevationValue,
-    lightSettings: LIGHT_SETTINGS
+    getElevationValue
   }
 };
 
@@ -360,12 +410,73 @@ const TextLayerExample = {
       name: 'fontFamily',
       type: 'category',
       value: ['Monaco', 'Helvetica', 'Garamond', 'Palatino', 'Courier', 'Courier New']
+    },
+    fontWeight: {
+      type: 'category',
+      max: 100,
+      value: [
+        'normal',
+        'bold',
+        'bolder',
+        'lighter',
+        '100',
+        '200',
+        '300',
+        '400',
+        '500',
+        '600',
+        '700',
+        '800',
+        '900'
+      ]
+    },
+    fontSettings: {
+      type: 'compound',
+      elements: ['fontSize', 'buffer', 'sdf', 'radius', 'cutoff']
+    },
+    fontSize: {
+      type: 'number',
+      max: 100,
+      onUpdate: (newValue, newSettings, change) => {
+        change('fontSettings', {...newSettings.fontSettings, fontSize: newValue});
+      }
+    },
+    buffer: {
+      type: 'number',
+      max: 100,
+      onUpdate: (newValue, newSettings, change) => {
+        change('fontSettings', {...newSettings.fontSettings, buffer: newValue});
+      }
+    },
+    sdf: {
+      type: 'boolean',
+      onUpdate: (newValue, newSettings, change) => {
+        change('fontSettings', {...newSettings.fontSettings, sdf: newValue});
+      }
+    },
+    radius: {
+      type: 'number',
+      max: 20,
+      onUpdate: (newValue, newSettings, change) => {
+        change('fontSettings', {...newSettings.fontSettings, radius: newValue});
+      }
+    },
+    cutoff: {
+      type: 'number',
+      max: 1,
+      onUpdate: (newValue, newSettings, change) => {
+        change('fontSettings', {...newSettings.fontSettings, cutoff: newValue});
+      }
     }
   },
   props: {
-    id: 'text-layer',
+    id: 'textgetAnchorX-layer',
     sizeScale: 1,
     fontFamily: 'Monaco',
+    fontSettings: {},
+    autoHighlight: true,
+    pickable: true,
+    highlightColor: [0, 0, 128, 128],
     getText: x => x.LOCATION_NAME,
     getPosition: x => x.COORDINATES,
     getColor: x => [153, 0, 0],
@@ -376,18 +487,30 @@ const TextLayerExample = {
   }
 };
 
+const BitmapLayerExample = {
+  layer: BitmapLayer,
+  props: {
+    id: 'bitmap-layer',
+    image: 'data/radar.gif',
+    bounds: [-80.425, 37.936, -71.516, 46.437]
+  }
+};
+
 /* eslint-disable quote-props */
 export default {
   'Core Layers - LngLat': {
     GeoJsonLayer: GeoJsonLayerExample,
     'GeoJsonLayer (Extruded)': GeoJsonLayerExtrudedExample,
     PolygonLayer: PolygonLayerExample,
+    'PolygonLayer (Flat)': PolygonLayerBinaryExample,
     PathLayer: PathLayerExample,
+    'PathLayer (Flat)': PathLayerBinaryExample,
     ScatterplotLayer: ScatterplotLayerExample,
     ArcLayer: ArcLayerExample,
     LineLayer: LineLayerExample,
     LineLayerNewCoords: LineLayerExampleNewCoords,
     IconLayer: IconLayerExample,
+    'IconLayer (auto packing)': IconLayerAutoPackingExample,
     GridCellLayer: GridCellLayerExample,
     GridLayer: GridLayerExample,
     ScreenGridLayer: ScreenGridLayerExample,
@@ -395,6 +518,7 @@ export default {
     HexagonLayer: HexagonLayerExample,
     TextLayer: TextLayerExample,
     ContourLayer: ContourLayerExample,
-    'ContourLayer (Bands)': ContourLayerBandsExample
+    'ContourLayer (Bands)': ContourLayerBandsExample,
+    BitmapLayer: BitmapLayerExample
   }
 };

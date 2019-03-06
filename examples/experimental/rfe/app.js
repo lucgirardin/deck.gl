@@ -164,7 +164,8 @@ export class App extends Component {
               {hoveredObject.properties.statusname} ({hoveredObject.properties.statusid})
             </div>
             <div>
-              Relevant: {hoveredObject.properties.isrelevant}, Statewide: {hoveredObject.properties.geo_statewide}
+              Relevant: {hoveredObject.properties.isrelevant}, Statewide:{' '}
+              {hoveredObject.properties.geo_statewide}
             </div>
           </div>
         </div>
@@ -175,13 +176,11 @@ export class App extends Component {
   _renderCaption() {
     const {year} = this.state;
     return (
-          <div className="caption">
-            <div>
-              <div>
-                {year}
-              </div>
-            </div>
-          </div>
+      <div className="caption">
+        <div>
+          <div>{year}</div>
+        </div>
+      </div>
     );
   }
 
@@ -293,7 +292,7 @@ export class App extends Component {
       dataChanged: true,
       parameters: {
         depthTest: true
-      },
+      }
     });
 
     const trail = 5;
@@ -390,7 +389,7 @@ export class App extends Component {
           layers={layers}
           onViewStateChange={this._onViewStateChange}
         >
-{/*          <StaticMap
+          {/*          <StaticMap
             mapStyle="mapbox://styles/mapbox/dark-v9"
             mapboxApiAccessToken={MAPBOX_ACCESS_TOKEN}
           />*/}
