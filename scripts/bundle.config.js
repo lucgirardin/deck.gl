@@ -1,8 +1,10 @@
-/* global process */
 const {resolve} = require('path');
 const webpack = require('webpack');
 
-const getAliases = require('../aliases');
+const ALIASES = require('ocular-dev-tools/config/ocular.config')({
+  aliasMode: 'src',
+  root: resolve(__dirname, '..')
+}).aliases;
 
 const PACKAGE_ROOT = resolve('.');
 const PACKAGE_INFO = require(resolve(PACKAGE_ROOT, 'package.json'));
@@ -13,7 +15,11 @@ const PACKAGE_INFO = require(resolve(PACKAGE_ROOT, 'package.json'));
  * e.g. @deck.gl/core is not bundled with @deck.gl/geo-layers
  */
 function getExternals(packageInfo) {
-  let externals = {};
+  let externals = {
+    // Hard coded externals
+    'h3-js': 'h3',
+    's2-geometry': 'S2'
+  };
   const {peerDependencies = {}} = packageInfo;
 
   for (const depName in peerDependencies) {
@@ -53,7 +59,7 @@ const config = {
   },
 
   resolve: {
-    alias: Object.assign({}, getAliases('src'))
+    alias: ALIASES
   },
 
   module: {
@@ -82,4 +88,20 @@ const config = {
   devtool: false
 };
 
-module.exports = config;
+module.exports = (env = {}) => {
+  // console.log(JSON.stringify(env, null, 2));
+
+  if (env.dev) {
+    // Set development mode (no minification)
+    config.mode = 'development';
+    // Remove .min from the name
+    config.output.filename = 'dist/dist.dev.js';
+    // Disable transpilation
+    config.module.rules = [];
+  }
+
+  // NOTE uncomment to display config
+  // console.log('webpack config', JSON.stringify(config, null, 2));
+
+  return config;
+};

@@ -1,9 +1,10 @@
 /* eslint-disable complexity */
-import assert from '../utils/assert';
 import GL from '@luma.gl/constants';
-import {Buffer, _Attribute as Attribute} from 'luma.gl';
-
+import {Buffer} from '@luma.gl/core';
+import assert from '../utils/assert';
+import {createIterable} from '../utils/iterable-utils';
 import log from '../utils/log';
+import BaseAttribute from './base-attribute';
 
 const DEFAULT_STATE = {
   isExternalBuffer: false,
@@ -12,7 +13,7 @@ const DEFAULT_STATE = {
   allocedInstances: -1
 };
 
-export default class LayerAttribute extends Attribute {
+export default class Attribute extends BaseAttribute {
   constructor(gl, opts = {}) {
     super(gl, opts);
 
@@ -280,8 +281,10 @@ export default class LayerAttribute extends Attribute {
     assert(typeof accessorFunc === 'function', `accessor "${accessor}" is not a function`);
 
     let i = 0;
-    for (const object of data) {
-      const objectValue = accessorFunc(object);
+    const {iterable, objectInfo} = createIterable(data);
+    for (const object of iterable) {
+      objectInfo.index++;
+      const objectValue = accessorFunc(object, objectInfo);
       this._normalizeValue(objectValue, value, i);
       i += size;
     }

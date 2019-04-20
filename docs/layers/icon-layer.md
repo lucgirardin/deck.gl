@@ -1,7 +1,8 @@
 <!-- INJECT:"IconLayerDemo" -->
 
 <p class="badges">
-  <img src="https://img.shields.io/badge/64--bit-support-blue.svg?style=flat-square" alt="64-bit" />
+  <img src="https://img.shields.io/badge/@deck.gl/layers-lightgrey.svg?style=flat-square" alt="@deck.gl/layers" />
+  <img src="https://img.shields.io/badge/fp64-yes-blue.svg?style=flat-square" alt="64-bit" />
 </p>
 
 # IconLayer
@@ -19,7 +20,8 @@ use cases.
 ## Example: pre-packed iconAtlas
 
 ```js
-import DeckGL, {IconLayer} from 'deck.gl';
+import DeckGL from '@deck.gl/react';
+import {IconLayer} from '@deck.gl/layers';
 
 const ICON_MAPPING = {
   marker: {x: 0, y: 0, width: 32, height: 32, mask: true}
@@ -121,6 +123,36 @@ const App = ({data, viewport}) => {
 };
 ```
 
+
+## Installation
+
+To install the dependencies from NPM:
+
+```bash
+npm install deck.gl
+# or
+npm install @deck.gl/core @deck.gl/layers
+```
+
+```js
+import {IconLayer} from '@deck.gl/layers';
+new IconLayer({});
+```
+
+To use pre-bundled scripts:
+
+```html
+<script src="https://unpkg.com/@deck.gl@~7.0.0/dist.min.js"></script>
+<!-- or -->
+<script src="https://unpkg.com/@deck.gl/core@~7.0.0/dist.min.js"></script>
+<script src="https://unpkg.com/@deck.gl/layers@~7.0.0/dist.min.js"></script>
+```
+
+```js
+new deck.IconLayer({});
+```
+
+
 ## Properties
 
 Inherits from all [Base Layer](/docs/api-reference/layer.md) properties.
@@ -156,15 +188,39 @@ given pre-packed `iconAtlas`.
 
 Icon size multiplier.
 
+##### `sizeUnits` (String, optional)
+
+* Default: `pixels` 
+
+The units of the size specified by `getSize`, one of `'meters'`, `'pixels'`. When zooming in and out, meter sizes scale with the base map, and pixel sizes remain the same on screen.
+
+##### `sizeMinPixels` (Number, optional)
+
+* Default: `0`
+
+The minimum size in pixels.
+
+##### `sizeMaxPixels` (Number, optional)
+
+* Default: `Number.MAX_SAFE_INTEGER`
+
+The maximum size in pixels.
+
 ##### `fp64` (Boolean, optional)
 
 - Default: `false`
 
 Whether the layer should be rendered in high-precision 64-bit mode. Note that since deck.gl v6.1, the default 32-bit projection uses a hybrid mode that matches 64-bit precision with significantly better performance.
 
+##### `billboard` (Boolean, optional)
+
+- Default: `true`
+
+If on, the icon always faces camera. Otherwise the icon faces up (z)
+
 ### Data Accessors
 
-##### `getIcon` (Function, optional)
+##### `getIcon` ([Function](/docs/developer-guide/using-layers.md#accessors), optional)
 
 - Default: `d => d.icon`
 
@@ -184,24 +240,24 @@ the following properties.
 
 `IconLayer` use `id` (fallback to `url`) to dedupe icons. If for the same icon identifier, `getIcon` returns different `width` or `height`, `IconLayer` will only apply the first occurrence and ignore the rest of them.
 
-##### `getPosition` (Function, optional) ![transition-enabled](https://img.shields.io/badge/transition-enabled-green.svg?style=flat-square")
+##### `getPosition` ([Function](/docs/developer-guide/using-layers.md#accessors), optional) ![transition-enabled](https://img.shields.io/badge/transition-enabled-green.svg?style=flat-square")
 
 - Default: `d => d.position`
 
 Method called to retrieve the position of each object, returns `[lng, lat, z]`.
 
 
-##### `getSize` (Function|Number, optional) ![transition-enabled](https://img.shields.io/badge/transition-enabled-green.svg?style=flat-square")
+##### `getSize` ([Function](/docs/developer-guide/using-layers.md#accessors)|Number, optional) ![transition-enabled](https://img.shields.io/badge/transition-enabled-green.svg?style=flat-square")
 
 - Default: `1`
 
-The height of each object, in pixels.
+The height of each object, in units specified by `sizeUnits` (default pixels).
 
 - If a number is provided, it is used as the size for all objects.
 - If a function is provided, it is called on each object to retrieve its size.
 
 
-##### `getColor` (Function|Array, optional) ![transition-enabled](https://img.shields.io/badge/transition-enabled-green.svg?style=flat-square")
+##### `getColor` ([Function](/docs/developer-guide/using-layers.md#accessors)|Array, optional) ![transition-enabled](https://img.shields.io/badge/transition-enabled-green.svg?style=flat-square")
 
 - Default: `[0, 0, 0, 255]`
 
@@ -211,7 +267,7 @@ The rgba color of each object, in `r, g, b, [a]`. Each component is in the 0-255
 - If a function is provided, it is called on each object to retrieve its color.
 - If `mask` = false, only the alpha component will be used to control the opacity of the icon.
 
-##### `getAngle` (Function|Number, optional) ![transition-enabled](https://img.shields.io/badge/transition-enabled-green.svg?style=flat-square")
+##### `getAngle` ([Function](/docs/developer-guide/using-layers.md#accessors)|Number, optional) ![transition-enabled](https://img.shields.io/badge/transition-enabled-green.svg?style=flat-square")
 
 - Default: `0`
 

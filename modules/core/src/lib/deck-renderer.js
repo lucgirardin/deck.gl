@@ -54,7 +54,7 @@ export default class DeckRenderer {
     activateViewport,
     views,
     redrawReason = 'unknown reason',
-    customRender = false,
+    clearCanvas = true,
     effects = [],
     pass,
     stats
@@ -67,7 +67,7 @@ export default class DeckRenderer {
       views,
       onViewportActive: activateViewport,
       redrawReason,
-      customRender,
+      clearCanvas,
       effects,
       effectProps
     });
@@ -80,9 +80,9 @@ export default class DeckRenderer {
     }
   }
 
-  needsRedraw(clearRedrawFlags) {
+  needsRedraw(opts = {clearRedrawFlags: false}) {
     const redraw = this._needsRedraw;
-    if (clearRedrawFlags) {
+    if (opts.clearRedrawFlags) {
       this._needsRedraw = false;
     }
     return redraw;

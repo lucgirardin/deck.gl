@@ -146,9 +146,9 @@ export default class AttributeManager {
   //
   // @param {String} [clearRedrawFlags=false] - whether to clear the flag
   // @return {false|String} - reason a redraw is needed.
-  getNeedsRedraw({clearRedrawFlags = false} = {}) {
+  getNeedsRedraw(opts = {clearRedrawFlags: false}) {
     const redraw = this.needsRedraw;
-    this.needsRedraw = this.needsRedraw && !clearRedrawFlags;
+    this.needsRedraw = this.needsRedraw && !opts.clearRedrawFlags;
     return redraw && this.id;
   }
 
@@ -236,9 +236,10 @@ export default class AttributeManager {
       if (attribute.userData.shaderAttributes) {
         const shaderAttributes = attribute.userData.shaderAttributes;
         for (const shaderAttributeName in shaderAttributes) {
-          shaderAttributes[shaderAttributeName].update({
+          const shaderAttribute = shaderAttributes[shaderAttributeName];
+          shaderAttribute.update({
             buffer: attribute.buffer,
-            value: attribute.value,
+            value: shaderAttribute.value || attribute.value,
             constant: attribute.constant
           });
         }
@@ -265,9 +266,9 @@ export default class AttributeManager {
 
   // Update attribute transition to the current timestamp
   // Returns `true` if any transition is in progress
-  updateTransition() {
+  updateTransition(timestamp) {
     const {attributeTransitionManager} = this;
-    const transitionUpdated = attributeTransitionManager.setCurrentTime(Date.now());
+    const transitionUpdated = attributeTransitionManager.setCurrentTime(timestamp);
     this.needsRedraw = this.needsRedraw || transitionUpdated;
     return transitionUpdated;
   }
@@ -284,9 +285,10 @@ export default class AttributeManager {
   /**
    * Returns changed attribute descriptors
    * This indicates which WebGLBuffers need to be updated
+   * @param opts.clearChangedFlags {Boolean}
    * @return {Object} attributes - descriptors
    */
-  getChangedAttributes({clearChangedFlags = false}) {
+  getChangedAttributes(opts = {clearChangedFlags: false}) {
     const {attributes, attributeTransitionManager} = this;
 
     const changedAttributes = Object.assign({}, attributeTransitionManager.getAttributes());
@@ -294,10 +296,7 @@ export default class AttributeManager {
 
     for (const attributeName in attributes) {
       const attribute = attributes[attributeName];
-      if (
-        attribute.needsRedraw({clearChangedFlags: true}) &&
-        !attributeTransitionManager.hasAttribute(attributeName)
-      ) {
+      if (attribute.needsRedraw(opts) && !attributeTransitionManager.hasAttribute(attributeName)) {
         changedAttributes[attributeName] = attribute;
       }
     }
@@ -379,7 +378,7 @@ export default class AttributeManager {
       isIndexed: attribute.isIndexed || attribute.elements,
       size: (attribute.elements && 1) || attribute.size,
       value: attribute.value || null,
-      instanced: attribute.instanced || extraProps.instanced
+      divisor: attribute.instanced || extraProps.instanced ? 1 : attribute.divisor
     };
 
     if (forceNoAlloc) {

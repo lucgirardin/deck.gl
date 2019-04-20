@@ -19,16 +19,16 @@
 // THE SOFTWARE.
 
 import {PhongMaterial} from '@luma.gl/core';
-import {
-  CompositeLayer,
-  _GPUGridAggregator as GPUGridAggregator,
-  _pointToDensityGridData as pointToDensityGridData
-} from '@deck.gl/core';
+import {CompositeLayer} from '@deck.gl/core';
 
 import GPUGridCellLayer from './gpu-grid-cell-layer';
 
+import GPUGridAggregator from '../utils/gpu-grid-aggregation/gpu-grid-aggregator';
+import {pointToDensityGridData} from '../utils/gpu-grid-aggregation/grid-aggregation-utils';
+
 const MINCOLOR = [0, 0, 0, 255];
 const MAXCOLOR = [0, 255, 0, 255];
+const defaultMaterial = new PhongMaterial();
 
 const defaultProps = {
   // elevation
@@ -43,7 +43,7 @@ const defaultProps = {
   pickable: false, // TODO: Enable picking with GPU Aggregation
 
   // Optional material for 'lighting' shader module
-  material: new PhongMaterial(),
+  material: defaultMaterial,
 
   // GPU Aggregation
   gpuAggregation: true
@@ -159,5 +159,5 @@ export default class GPUGridLayer extends CompositeLayer {
   }
 }
 
-GPUGridLayer.layerName = 'GridLayer';
+GPUGridLayer.layerName = 'GPUGridLayer';
 GPUGridLayer.defaultProps = defaultProps;

@@ -19,13 +19,12 @@
 // THE SOFTWARE.
 
 import {equals} from 'math.gl';
-import {
-  CompositeLayer,
-  _GPUGridAggregator as GPUGridAggregator,
-  _pointToDensityGridData as pointToDensityGridData
-} from '@deck.gl/core';
+import {CompositeLayer} from '@deck.gl/core';
 import {LineLayer, SolidPolygonLayer} from '@deck.gl/layers';
 import {generateContours} from './contour-utils';
+
+import GPUGridAggregator from '../utils/gpu-grid-aggregation/gpu-grid-aggregator';
+import {pointToDensityGridData} from '../utils/gpu-grid-aggregation/grid-aggregation-utils';
 
 const DEFAULT_COLOR = [255, 255, 255, 255];
 const DEFAULT_STROKE_WIDTH = 1;
@@ -173,19 +172,18 @@ export default class ContourLayer extends CompositeLayer {
     const {fp64} = this.props;
     const {colorTrigger, strokeWidthTrigger} = this.state;
 
-    return super.getSubLayerProps({
+    return this.getSubLayerProps({
       id: 'contour-line-layer',
       data: this.state.contourData.contourSegments,
       fp64,
       getSourcePosition: d => d.start,
       getTargetPosition: d => d.end,
       getColor: this._onGetSublayerColor.bind(this),
-      getStrokeWidth: this._onGetSublayerStrokeWidth.bind(this),
-      colorTrigger,
-      strokeWidthTrigger,
+      getWidth: this._onGetSublayerStrokeWidth.bind(this),
+      widthUnits: 'pixels',
       updateTriggers: {
         getColor: colorTrigger,
-        getStrokeWidth: strokeWidthTrigger
+        getWidth: strokeWidthTrigger
       }
     });
   }
@@ -194,13 +192,12 @@ export default class ContourLayer extends CompositeLayer {
     const {fp64} = this.props;
     const {colorTrigger} = this.state;
 
-    return super.getSubLayerProps({
+    return this.getSubLayerProps({
       id: 'contour-solid-polygon-layer',
       data: this.state.contourData.contourPolygons,
       fp64,
       getPolygon: d => d.vertices,
       getFillColor: this._onGetSublayerColor.bind(this),
-      colorTrigger,
       updateTriggers: {
         getFillColor: colorTrigger
       }
@@ -250,25 +247,14 @@ export default class ContourLayer extends CompositeLayer {
 
   _updateSubLayerTriggers(oldProps, props) {
     if (oldProps && oldProps.contours && props && props.contours) {
-      // threshold value change or count change will trigger data change for sublayers
-      // those cases are not handled here.
-      let oldColors = [];
-      let newColors = [];
-      const oldStrokeWidths = [];
-      const newStrokeWidths = [];
-      oldProps.contours.forEach(contour => {
-        oldColors = oldColors.concat(contour.color);
-        oldStrokeWidths.push(contour.strokeWidth || DEFAULT_STROKE_WIDTH);
-      });
-      props.contours.forEach(contour => {
-        newColors = newColors.concat(contour.color);
-        newStrokeWidths.push(contour.strokeWidth || DEFAULT_STROKE_WIDTH);
-      });
-
-      if (!equals(oldColors, newColors)) {
+      if (props.contours.some((contour, i) => contour.color !== oldProps.contours[i].color)) {
         this.state.colorTrigger++;
       }
-      if (!equals(oldStrokeWidths, newStrokeWidths)) {
+      if (
+        props.contours.some(
+          (contour, i) => contour.strokeWidth !== oldProps.contours[i].strokeWidth
+        )
+      ) {
         this.state.strokeWidthTrigger++;
       }
     }
