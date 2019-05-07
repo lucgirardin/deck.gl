@@ -14,7 +14,7 @@ const INITIAL_VIEW_STATE = {
   // bearing: 0,
   // pitch: 60,
   lookAt: [0, 0, 0],
-  distance: OrbitView.getDistance({boundingBox: [400, 400, 400], fov: 50}),
+  // distance: OrbitView.getDistance({boundingBox: [400, 400, 400], fov: 50}),
   rotationX: -30,
   rotationOrbit: 30,
   orbitAxis: 'Y',
@@ -35,6 +35,7 @@ class Root extends Component {
         layers={[
           new SolidPolygonLayer({
             coordinateSystem: COORDINATE_SYSTEM.IDENTITY,
+            opacity: 1.0,
             pickable: true,
             autoHighlight: true,
             data: SAMPLE_TREEMAP,

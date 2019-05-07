@@ -148,10 +148,10 @@ export class App extends Component {
   }
 
   _renderTooltip() {
-    const {x, y, hoveredObject} = this.state;
+    const {pointerX, pointerY, hoveredObject} = this.state || {};
     return (
       hoveredObject && (
-        <div className="tooltip" style={{top: y, left: x}}>
+        <div className="tooltip" style={{top: pointerY, left: pointerX}}>
           <div>
             <div>
               {hoveredObject.properties.countryname} ({hoveredObject.properties.gwid})
@@ -286,12 +286,17 @@ export class App extends Component {
         data: t
       },
       getLineWidth: 1,
-      pickable: true,
-      autoHighlight: true,
-      onHover: this._onHover,
+      pickable: false,
+      picking: false,
+      autoHighlight: false,
+      onHover: info => this.setState({
+        hoveredObject: info.object,
+        pointerX: info.x,
+        pointerY: info.y
+      }),
       dataChanged: true,
       parameters: {
-        depthTest: true
+        depthTest: false
       }
     });
 
