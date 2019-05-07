@@ -33,7 +33,7 @@ const INITIAL_VIEW_STATE = {
 };
 
 const animation = {
-  stop: false,
+  stop: true,
   frameCount: 0,
   // var $results = $("#results");
   fps: null,
@@ -51,6 +51,7 @@ export class App extends Component {
     this.state = {
       hoveredObject: null,
       year: 2017,
+      elevation: 1000,
       viewState: {
         latitude: 0,
         longitude: 0,
@@ -110,7 +111,18 @@ export class App extends Component {
     // console.log(time);
   }
 
+  _setElevation(e) {
+    this.setState({
+      elevation: e,
+    });
+    // const {time} = this.state;
+    // t = date;
+//    this.redraw();
+    // console.log(time);
+  }
+
   startAnimating(fps) {
+    animation.stop = !animation.stop;
     animation.fpsInterval = 1000 / fps;
     animation.then = Date.now();
     animation.startTime = animation.then;
@@ -118,23 +130,25 @@ export class App extends Component {
   }
 
   animate() {
-    // request another frame
+    if(!animation.stop) {
+      // request another frame
 
-    window.requestAnimationFrame(this.animate.bind(this));
+      window.requestAnimationFrame(this.animate.bind(this));
 
-    // calc elapsed time since last loop
+      // calc elapsed time since last loop
 
-    animation.now = Date.now();
-    animation.elapsed = animation.now - animation.then;
+      animation.now = Date.now();
+      animation.elapsed = animation.now - animation.then;
 
-    // if enough time has elapsed, draw the next frame
+      // if enough time has elapsed, draw the next frame
 
-    if (animation.elapsed > animation.fpsInterval) {
-      // Get ready for next frame by setting then=now, but also adjust for your
-      // specified fpsInterval not being a multiple of RAF's interval (16.7ms)
-      animation.then = animation.now - (animation.elapsed % animation.fpsInterval);
+      if (animation.elapsed > animation.fpsInterval) {
+        // Get ready for next frame by setting then=now, but also adjust for your
+        // specified fpsInterval not being a multiple of RAF's interval (16.7ms)
+        animation.then = animation.now - (animation.elapsed % animation.fpsInterval);
 
-      this._animate();
+        this._animate();
+      }
     }
   }
   _animate() {
@@ -186,6 +200,7 @@ export class App extends Component {
 
   _renderOptions() {
     const {year} = this.state;
+    const {elevation} = this.state;
     return (
       year && (
         <div id="options">
@@ -199,8 +214,17 @@ export class App extends Component {
               className="timeslider"
               onChange={e => this._setTime(e.target.value)}
             />
+            {/*<span>Elevation:</span>*/}
+            {/*  <input*/}
+            {/*      type="range"*/}
+            {/*      min="0"*/}
+            {/*      max="10000"*/}
+            {/*      value={elevation}*/}
+            {/*      className="elevationslider"*/}
+            {/*      onChange={e => this._setElevation(e.target.value)}*/}
+            {/*  />*/}
             <button type="button" onClick={e => this.startAnimating(1)}>
-              Animate
+              Start/stop temporal animation
             </button>
             <button type="button" onClick={e => this._easeTo(-90.5069, 14.6349, 5)}>
               Guatemala
@@ -225,6 +249,7 @@ export class App extends Component {
 
   createLayers(t) {
     const {year} = this.state;
+    const {elevation} = this.state;
 
     // const t = year;
 
@@ -269,12 +294,12 @@ export class App extends Component {
       stroked: true,
       filled: true,
       extruded: true,
-      wireframe: false,
+      wireframe: true,
       lineWidthScale: 1,
       lineWidthMinPixels: 1,
       // fp64: true,
       // lightSettings: LIGHT_SETTINGS,
-      getElevation: f => (f.properties.statusid + 1) * 5000,
+      getElevation: f => (f.properties.statusid + 1) * elevation,
       // getFillColor: f=> colorScale(f.properties.growth),
       // getFillColor: f  => [t / 10, t / 10, t / 10],
       getFillColor: f => colorScale(f.properties.statusid),
@@ -380,6 +405,7 @@ export class App extends Component {
   render() {
     const {viewState} = this.state;
     const {year} = this.state;
+    const {elevation} = this.state;
     const {layers} = this.state;
     console.log('Rendering at ' + year + ' for ' + layers);
 
