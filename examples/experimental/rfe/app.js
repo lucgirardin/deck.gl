@@ -294,7 +294,7 @@ export class App extends Component {
       stroked: true,
       filled: true,
       extruded: true,
-      wireframe: true,
+      wireframe: false,
       lineWidthScale: 1,
       lineWidthMinPixels: 1,
       // fp64: true,
